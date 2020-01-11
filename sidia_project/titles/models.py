@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 
-class Movie(models.Model):
+class Title(models.Model):
     tconst = models.CharField(max_length=20, primary_key=True)
     titleType = models.CharField(max_length=15)
     primaryTitle = models.CharField(max_length=100)
@@ -25,7 +25,7 @@ class Movie(models.Model):
         return self.originalTitle + '\nDuration - ' + str(self.runtimeMinutes) + '\n' + str(self.startYear)
 
 class Rating(models.Model):
-    tconst = models.ForeignKey('Movie', on_delete=models.CASCADE, to_field='tconst')
+    tconst = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='tconst')
     averageRating = models.FloatField()
     numVotes = models.IntegerField(validators=[MinValueValidator(0, message='The number of votes must be at least 0')])
 
@@ -45,8 +45,8 @@ class Actor(models.Model):
     def __str__(self):
         return self.primaryName
 
-class MovieActor(models.Model):
-    tconst = models.ForeignKey('Movie', on_delete=models.CASCADE, to_field='tconst')
+class TitleActor(models.Model):
+    tconst = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='tconst')
     nconst = models.ForeignKey('Actor', on_delete=models.CASCADE, to_field='nconst')
 
 class DataImportApp(object):

@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import Movie, Actor, Rating, MovieActor
+from .models import Title, Actor, Rating, TitleActor
 
-class MovieSerializer(serializers.ModelSerializer):
+class TitleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Movie
+        model = Title
         fields = ('tconst', 'titleType', 'primaryTitle', 'originalTitle', 'isAdult', 'startYear', 'endYear', 'runtimeMinutes', 'genres')
 
 class ActorSerializer(serializers.ModelSerializer):
@@ -16,7 +16,7 @@ class RatingSerializer(serializers.ModelSerializer):
         model = Rating
         fields = ('tconst', 'averageRating', 'numVotes')
 
-class MovieActorSerializer(serializers.ModelSerializer):
+class TitleActorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = MovieActor
+        model = TitleActor
         fields = ('tconst', 'nconst')

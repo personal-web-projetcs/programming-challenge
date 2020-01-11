@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'movies.apps.MoviesConfig',
+    'titles.apps.TitlesConfig',
 ]
 
 MIDDLEWARE = [
@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'djangoconfig.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'movies',
+        'NAME': 'titles',
         'USER': 'djangoapp',
         'PASSWORD': '@01123581321',
         'HOST': 'localhost',
