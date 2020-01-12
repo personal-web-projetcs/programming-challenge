@@ -1,53 +1,66 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 
 class Title(models.Model):
-    tconst = models.CharField(max_length=20, primary_key=True)
-    titleType = models.CharField(max_length=15)
+    titleId = models.AutoField(primary_key=True)
+    tconst = models.CharField(max_length=20)
+    titleType = models.CharField(max_length=20)
     primaryTitle = models.CharField(max_length=100)
     originalTitle = models.CharField(max_length=100)
     isAdult = models.BooleanField()
     startYear = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
-                                                MaxValueValidator(9999, message='The year must be up to 9999')])
+                                                MaxValueValidator(9999, message='The year must be up to 9999')], 
+                                    null=True)
     endYear = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
-                                                MaxValueValidator(9999, message='The year must be up to 9999')],
-                                  default=models.SET_NULL)
-    runtimeMinutes = models.IntegerField(validators=[MinValueValidator(1, message='The runtime of title must be at least 1')])
-    genres = models = [
-        models.CharField(max_length=15),
-        models.CharField(max_length=15),
-        models.CharField(max_length=15)
-    ]
-
+                                                MaxValueValidator(9999, message='The year must be up to 9999')], 
+                                  null=True)
+    runtimeMinutes = models.IntegerField(validators=[MinValueValidator(1, message='The runtime of title must be at least 1')], null=True)
+    genres = ArrayField(models.CharField(max_length=20), size=3, null=True)
+    
     def __str__(self):
         return self.originalTitle + '\nDuration - ' + str(self.runtimeMinutes) + '\n' + str(self.startYear)
+    
+    class Meta:
+        db_table = 'tbl_title'
 
 class Rating(models.Model):
-    tconst = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='tconst')
+    titleId = models.OneToOneField('Title', on_delete=models.CASCADE, to_field='titleId', primary_key=True)
     averageRating = models.FloatField()
     numVotes = models.IntegerField(validators=[MinValueValidator(0, message='The number of votes must be at least 0')])
 
     def __str__(self):
         return str(self.numVotes) + ' votes'
+    
+    class Meta:
+        db_table = 'tbl_rating'
 
 class Actor(models.Model):
-    nconst = models.CharField(max_length=20, primary_key=True)
+    actorId = models.AutoField(primary_key=True)
+    nconst = models.CharField(max_length=20)
     primaryName = models.CharField(max_length=30)
-    birthYear = models.CharField(max_length=4)
-    deathYear = models.CharField(max_length=4)
-    primaryProfession = [
-        models.CharField(max_length=20),
-        models.CharField(max_length=20),
-        models.CharField(max_length=20)
-    ]
+    birthYear = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
+                                                MaxValueValidator(9999, message='The year must be up to 9999')], 
+                                  null=True)
+    deathYear = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
+                                                MaxValueValidator(9999, message='The year must be up to 9999')], 
+                                  null=True)
+    primaryProfession = ArrayField(models.CharField(max_length=20), size=3, null=True)
+
     def __str__(self):
         return self.primaryName
+    
+    class Meta:
+        db_table = 'tbl_actor'
 
 class TitleActor(models.Model):
-    tconst = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='tconst')
-    nconst = models.ForeignKey('Actor', on_delete=models.CASCADE, to_field='nconst')
+    titleId = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='titleId')
+    actorId = models.ForeignKey('Actor', on_delete=models.CASCADE, to_field='actorId')
+
+    class Meta:
+        db_table = 'tbl_title_actor'
 
 class DataImportApp(object):
     def importFile(self, separator):

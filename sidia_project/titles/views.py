@@ -8,7 +8,10 @@ from .models import Title, Actor, Rating, TitleActor
 
 class TitleView(viewsets.ModelViewSet): 
     serializer_class = TitleSerializer
-    queryset = Title.objects.all()    #ignore
+    
+    def get_all_titles(self):
+        queryset = Title.objects.all()    #ignore
+
 
 class ActorView(viewsets.ModelViewSet): 
     serializer_class = ActorSerializer
