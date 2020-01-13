@@ -8,8 +8,8 @@ class Title(models.Model):
     title_id = models.AutoField(primary_key=True)
     tconst = models.CharField(max_length=20)
     title_type = models.CharField(max_length=20)
-    primary_title = models.CharField(max_length=100)
-    original_title = models.CharField(max_length=100)
+    primary_title = models.CharField(max_length=450)
+    original_title = models.CharField(max_length=450)
     is_adult = models.BooleanField()
     start_year = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
                                                 MaxValueValidator(9999, message='The year must be up to 9999')], 
@@ -18,7 +18,7 @@ class Title(models.Model):
                                                 MaxValueValidator(9999, message='The year must be up to 9999')], 
                                   null=True)
     runtime_minutes = models.IntegerField(validators=[MinValueValidator(1, message='The runtime of title must be at least 1')], null=True)
-    genres = ArrayField(models.CharField(max_length=20), size=3, null=True)
+    genres = ArrayField(models.CharField(max_length=40), size=3, null=True)
     
     def __str__(self):
         return self.original_title + '\nDuration - ' + str(self.runtime_minutes) + '\n' + str(self.start_year)
@@ -43,14 +43,14 @@ class Rating(models.Model):
 class Actor(models.Model):
     actor_id = models.AutoField(primary_key=True)
     nconst = models.CharField(max_length=20)
-    primary_name = models.CharField(max_length=30)
+    primary_name = models.CharField(max_length=150)
     birth_year = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
                                                 MaxValueValidator(9999, message='The year must be up to 9999')], 
                                   null=True)
     death_year = models.IntegerField(validators=[MinValueValidator(1, message='The year must be at least 1'), 
                                                 MaxValueValidator(9999, message='The year must be up to 9999')], 
                                   null=True)
-    primary_profession = ArrayField(models.CharField(max_length=20), size=3, null=True)
+    primary_profession = ArrayField(models.CharField(max_length=50), size=3, null=True)
 
     def __str__(self):
         return self.primary_name

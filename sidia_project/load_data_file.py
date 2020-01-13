@@ -19,25 +19,9 @@ class DataBaseInterface(object):
             
         return self.conn.cursor()
     
-    #Execute query prepared using mogrify lib
-    def execute_prepared_query(self, query):
-        try:
-            self.cursor.execute(query)
-            print(query)
-        except Exception as e:
-            print(e)
-            print(query)
-
-    
-    def commit_changes(self):
-        try:
-            self.conn.commit()
-            self.cursor.close()
-            self.conn.close()
-        except Exception as e:
-            print(e)
-            self.cursor = None
-            self.conn = None
+    def commit_changes(self):      
+        self.conn.commit()
+        
             
 
 class Title(object):
@@ -56,15 +40,15 @@ class Title(object):
         db_cursor = db.connect()
 
         f = open(pathfile, 'r', encoding='utf-8')
-        dataset = csv.reader(f, delimiter=  '\t')
+        dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
 
         i = 0
         next(dataset)
         for str_item in dataset:
             i = i + 1
 
-            if (i == 51):
-                break
+            #if (i == 51):
+            #    break
             
             self.tconst = str_item[0]
             self.title_type = str_item[1]
@@ -74,7 +58,7 @@ class Title(object):
             self.start_year = int(str_item[5]) if (str_item[5].isdigit() and len(str_item[5]) == 4) else None
             self.end_year = int(str_item[6]) if (str_item[6].isdigit() and len(str_item[6]) == 4) else None
             self.runtime_minutes = int(str_item[7]) if (str_item[7].isdigit()) else None
-
+            
             g = str_item[8].replace(' ', '')
             g = g.replace('\n', '')
             g = g.replace('\\', '')
@@ -88,15 +72,20 @@ class Title(object):
             if (len(self.genres) == 0): self.genres = None
             
             sql_code = 'INSERT INTO tbl_title VALUES (default, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *'
-            fields = (self.tconst, self.title_type, self.primary_title, self.original_title, self.is_adult, self.start_year, self.end_year, self.runtime_minutes, self.genres)
+            fields = (self.tconst, self.title_type, self.primary_title, self.original_title, self.is_adult, self.start_year, self.end_year, self.runtime_minutes, self.genres)        
 
-            formatted_query = db_cursor.mogrify(sql_code, fields)
+            try:
+                formatted_query = db_cursor.mogrify(sql_code, fields)
+                db_cursor.execute(formatted_query)
+                if (i % 100 == 0):
+                    db.commit_changes()
+            except Exception as e:
+                print(e)
+                print(str_item)
+                exit()
 
-            print(formatted_query)
-
-            db_cursor.execute(formatted_query)
-        
-        db.commit_changes()
+        db_cursor.close()
+        db.conn.close()
 
 
 class Actor(object):
@@ -112,15 +101,15 @@ class Actor(object):
         db_cursor = db.connect()
 
         f = open(pathfile, 'r', encoding='utf-8')
-        dataset = csv.reader(f, delimiter=  '\t')
+        dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
 
         i = 0
         next(dataset)
         for str_item in dataset:
             i = i + 1
 
-            if (i == 51):
-                break
+            #if (i == 51):
+            #    break
             
             self.nconst = str_item[0]
             self.primary_name = str_item[1]
@@ -140,24 +129,69 @@ class Actor(object):
             
             sql_code = 'INSERT INTO tbl_actor VALUES (default, %s, %s, %s, %s, %s) RETURNING *'
             fields = (self.nconst, self.primary_name, self.birth_year, self.death_year, self.primary_profession)
-            formatted_query = db_cursor.mogrify(sql_code, fields)
-            #print(formatted_query)
+            
             try:
+                formatted_query = db_cursor.mogrify(sql_code, fields)
                 db_cursor.execute(formatted_query)
+                if (i % 100 == 0):
+                    db.commit_changes()
+            except Exception as e:
+                print(e)
+                print(str_item)
+                exit()
+                #continue
+
+            print("actors - i = " + str(i))
+        
+        try:
+            db.commit_changes()
+            db_cursor.close()
+            db.conn.close()
+        except:
+            pass
+
+
+
+class TitleActor(object):
+    def __init__(self):
+        self.title_id = 0
+        self.actor_id = 0
+    
+    def load_data_title_actor(self, pathfile, db):
+        db_cursor = db.connect()
+
+        f = open(pathfile, 'r', encoding='utf-8')
+        dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
+
+        i = 0
+        next(dataset)
+        for str_item in dataset:
+            i = i + 1
+
+            nconst = str_item[0]
+            sql_code = 'SELECT * FROM tbl_actor WHERE nconst = %s'
+            fields = (nconst,)
+                
+            try:
+                formatted_query = db_cursor.mogrify(sql_code, fields)
+                db_cursor.execute(formatted_query)
+                result = db_cursor.fetchone()
             except Exception as e:
                 print(e)
                 print(formatted_query)
+                exit()
 
-            result = db_cursor.fetchone()
-            print(result)
-            if (result):
+            if len(result) > 0: 
                 actor_id = result[0]
-                self.load_and_save_known_titles(actor_id, str_item[5], db_cursor)
+                self.save_known_titles(actor_id, str_item[5], db_cursor)
+            else:
+                print("Actor not found " + nconst)
 
-        db.commit_changes()
+            print("title_actor - i = " + str(i))
+
+
+    def save_known_titles(self, actor_id, titles, db_cursor):
     
-    def load_and_save_known_titles(self, actor_id, titles, db_cursor):
-
             p = titles.replace(' ', '')
             p = p.replace('\n', '')
             p = p.replace('\\', '')
@@ -173,30 +207,99 @@ class Actor(object):
             for k in known_for_titles:
                 sql_code = 'SELECT * FROM tbl_title WHERE tconst = %s'
                 fields = (k,)
-                formatted_query = db_cursor.mogrify(sql_code, fields)
+                
                 try:
+                    formatted_query = db_cursor.mogrify(sql_code, fields)
                     db_cursor.execute(formatted_query)
+                    result = db_cursor.fetchone()
                 except Exception as e:
                     print(e)
                     print(formatted_query)
-                result = db_cursor.fetchone()
+                    exit()
+                    # db_cursor = db.connect()
+                    # continue
 
                 if (result): self.known_for_titles.append(result[0])
 
             if (len(self.known_for_titles) > 0):
                 for k in self.known_for_titles:
                     sql_code = 'INSERT INTO tbl_title_actor VALUES (default, %s, %s)'
-                    fields = (k, actor_id)
-                    formatted_query = db_cursor.mogrify(sql_code, fields)
+                    fields = (actor_id, k)
                     try:
+                        formatted_query = db_cursor.mogrify(sql_code, fields)
                         db_cursor.execute(formatted_query)
-                        print(formatted_query)
+                        db.commit_changes()
                     except Exception as e:
                         print(e)
                         print(formatted_query)
+                        exit()
+                        # db_cursor = db.connect()
+                        # continue
             else:
-                print("Have no known titles from " + str(actor_id))
-    
+                print(">> Not found titles in db ")
+                print(">> Actor : " + str(actor_id))
+                print(">> Titles : " + str(known_for_titles))
+
+    def load_data_title_actor_temp(self, pathfile, db):
+        db_cursor = db.connect()
+
+        # f = open(pathfile, 'r', encoding='utf-8')
+        # dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
+
+        # i = 0
+        # l = 0
+        # next(dataset)
+        # for str_item in dataset:
+        #     i = i + 1
+        #     l = l + 1
+        #     nconst = str_item[0]
+            
+        #     p = str_item[5].replace(' ', '')
+        #     p = p.replace('\n', '')
+        #     p = p.replace('\\', '')
+        #     p = p.split(",")
+        #     known_for_titles = []
+        #     for kft in p:
+        #         if (kft != "N"):   known_for_titles.append(kft)
+            
+        #     j = 0
+        #     for k in known_for_titles:
+        #         sql_code = 'INSERT INTO tbl_title_actor_temp VALUES (%s, %s, %s)'
+        #         fields = ((i + j), k, nconst)
+        #         try:
+        #             formatted_query = db_cursor.mogrify(sql_code, fields)
+        #             db_cursor.execute(formatted_query)
+        #             j = j + 1
+        #             if (i % 100 == 0):
+        #                 db.commit_changes()
+        #         except Exception as e:
+        #             print(e)
+        #             print(formatted_query)
+        #             exit()
+
+        #     i = i + j
+        #     print("title_actor - l = " + str(l))
+        self._execute_query(db_cursor)
+        db_cursor.close()
+        db.conn.close()
+
+    def _execute_query(self, db_cursor):
+        
+        sql_code = """INSERT INTO tbl_title_actor 
+                        SELECT tbl_title_actor_temp.uid, tbl_actor.actor_id, tbl_title.title_id 
+                        FROM  tbl_title INNER JOIN tbl_title_actor_temp ON tbl_title.tconst=tbl_title_actor_temp.tconst 
+                        INNER JOIN tbl_actor ON tbl_actor.nconst=tbl_title_actor_temp.nconst 
+                        WHERE tbl_title.title_id IS NOT NULL AND tbl_actor.actor_id IS NOT NULL"""
+        try:
+            #formatted_query = db_cursor.mogrify(sql_code)
+            #db_cursor.execute(formatted_query)
+            db_cursor.execute(sql_code)
+            db.commit_changes()
+        except Exception as e:
+            print(e)
+            print(sql_code)
+            exit()
+
 
 class Rating(object):
     def __init__(self):
@@ -208,14 +311,14 @@ class Rating(object):
         db_cursor = db.connect()
 
         f = open(pathfile, 'r', encoding='utf-8')
-        dataset = csv.reader(f, delimiter=  '\t')
+        dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
 
         i = 0
         next(dataset)
         for str_item in dataset:   
             i = i + 1
 
-            if (i == 51):
+            if (i == 1001):
                 break
             
             tconst = str_item[0]
@@ -244,24 +347,137 @@ class Rating(object):
             #print(formatted_query)
             try:
                 db_cursor.execute(formatted_query)
+                #if (i % 100 == 0):
+                   #db.commit_changes()
+                db.commit_changes()
             except Exception as e:
                 print(e)
                 print(formatted_query)
-        db.commit_changes()
+                exit()
+            
+            
+            print("ratings - i = " + str(i))
+
+        db_cursor.close()
+        db.conn.close()
+    
+    def load_and_save_ratings_temp(self, pathfile, db):
+
+        db_cursor = db.connect()
+
+        f = open(pathfile, 'r', encoding='utf-8')
+        dataset = csv.reader(f, delimiter=  '\t', quoting=csv.QUOTE_NONE)
+
+        i = 0
+        next(dataset)
+        for str_item in dataset:   
+            i = i + 1
+            
+            tconst = str_item[0]
+            
+            try:
+                self.average_rating = float(str_item[1])
+            except:
+                self.average_rating = None
+
+            self.num_votes = int(str_item[2]) if (str_item[2].isdigit()) else None
+
+            sql_code = 'INSERT INTO tbl_rating_temp VALUES (%s, %s, %s, %s)'
+            fields = (i, tconst, self.average_rating, self.num_votes)
+            formatted_query = db_cursor.mogrify(sql_code, fields)
+            #print(formatted_query)
+            try:
+                db_cursor.execute(formatted_query)
+                if (i % 100 == 0):
+                    db.commit_changes()
+            except Exception as e:
+                print(e)
+                print(formatted_query)
+                exit()
+            
+            print("ratings_temp - i = " + str(i))
+
+        try:
+            db.commit_changes()
+        except Exception as e:
+            print(e)
+            exit()
+        self._execute_query(db_cursor)    
+        db_cursor.close()
+        db.conn.close()
+        
+    
+    def _execute_query(self, db_cursor):
+        
+        sql_code = """INSERT INTO tbl_rating
+                      SELECT title_id, average_rating, num_votes
+                      FROM  tbl_title INNER JOIN tbl_rating_temp ON tbl_title.tconst=tbl_rating_temp.tconst
+                      WHERE tbl_title.tconst <> ''"""
+        try:
+            db_cursor.execute(sql_code)
+            db.commit_changes()
+        except Exception as e:
+            print(e)
+            exit()
+
+
+def max_size_field(pathfile, column):
+    max = 0
+    value = ""
+
+    f = open(pathfile, 'r', encoding='utf-8')
+    dataset = csv.reader(f, delimiter=  '\t',  quoting=csv.QUOTE_NONE)
+
+    next(dataset)
+    for str_item in dataset:
+        if len(str_item[column]) > max: 
+            max = len(str_item[column])
+            value = str_item
+    return (value, max)
+
+def count_fields(pathfile, lim):
+    f = open(pathfile, 'r', encoding='utf-8')
+    dataset = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+
+    next(dataset)
+    for str_item in dataset:
+        if len(str_item) != lim: 
+
+            print(str(str_item))
+
+# max = max_size_field('data_title.tsv', 2)
+# print(max)
+# count_fields('data_rating.tsv', 3)
 
 
 db = DataBaseInterface()
 
-t = Title()
-t.load_and_save_titles('data_title.tsv', db)
-print("Success - Titles data saved")
+# t = Title()
+# t.load_and_save_titles('data_title.tsv', db)
+# print("Success - Titles data saved")
 
-t = Actor()
-t.load_and_save_actors('data_name.tsv', db)
-print("Success - Actors data saved")
+# t = Actor()
+# t.load_and_save_actors('data_name.tsv', db)
+# print("Success - Actors data saved")
+
+# t = TitleActor()
+# t.load_data_title_actor('data_name.tsv', db)
+# print("Success - TitleActor data saved")
+
+# t = TitleActor()
+# t.load_data_title_actor_temp('data_name.tsv', db)
+# print("Success - TitleActor data saved")
+
+# t = Rating()
+# t.load_and_save_ratings('data_rating.tsv', db)
+# print("Success - Ratings data saved")
 
 t = Rating()
-t.load_and_save_ratings('data_rating.tsv', db)
+t.load_and_save_ratings_temp('data_rating.tsv', db)
 print("Success - Ratings data saved")
+
+
+
+
 
 
