@@ -17,16 +17,20 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 from titles import views
+from rest_framework.urlpatterns import format_suffix_patterns
 
-router = routers.DefaultRouter()
-router.register(r'titles', views.TitleView, 'titles')
-router.register(r'actors', views.ActorView, 'actors')
-router.register(r'ratings', views.RatingView, 'ratings')
-router.register(r'title-actor', views.TitleActorView, 'title-actor')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('titles/', include('titles.urls')),
+    path('api/titles/', views.TitleList.as_view()),
+
+    path('api/titles/type/<str:title_type>/', views.TitleTypeList.as_view()),
+    path('api/titles/genre/<str:genre>/', views.TitleGenreList.as_view()),
+
+    path('api/titles/year/', views.TitleTopList.as_view()),
+    path('api/titles/year/<str:year>/', views.TitleTopList.as_view()),
+    
+    #path('index/', include('titles.urls')),
     path('admin/', admin.site.urls),
 ]
 
+urlpatterns = format_suffix_patterns(urlpatterns)

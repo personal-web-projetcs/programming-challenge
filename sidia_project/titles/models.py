@@ -27,7 +27,7 @@ class Title(models.Model):
         db_table = 'tbl_title'
 
 class Rating(models.Model):
-    title_id = models.OneToOneField('Title', on_delete=models.CASCADE, to_field='title_id', primary_key=True)
+    title_id = models.OneToOneField('Title', on_delete=models.CASCADE, to_field='title_id', primary_key=True, related_name='rating', )
     average_rating = models.FloatField(null=True)
     num_votes = models.IntegerField(validators=[MinValueValidator(0, message='The number of votes must be at least 0')], null=True)
 
@@ -59,8 +59,8 @@ class Actor(models.Model):
         db_table = 'tbl_actor'
 
 class TitleActor(models.Model):
-    title_id = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='title_id')
-    actor_id = models.ForeignKey('Actor', on_delete=models.CASCADE, to_field='actor_id')
+    title_id = models.ForeignKey('Title', on_delete=models.CASCADE, to_field='title_id', related_name='title')
+    actor_id = models.ForeignKey('Actor', on_delete=models.CASCADE, to_field='actor_id', related_name='actor')
 
     class Meta:
         db_table = 'tbl_title_actor'

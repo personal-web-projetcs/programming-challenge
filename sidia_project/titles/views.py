@@ -1,62 +1,95 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import Http404
+from django.core import serializers as s
+from django.shortcuts import get_object_or_404
+
+from rest_framework.pagination import CursorPagination
+from rest_framework import mixins
+from rest_framework import generics
 from rest_framework import viewsets
+from rest_framework.response import Response
+
 from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer
 from .models import Title, Actor, Rating, TitleActor
+import json
 
 # Create your views here.
 
-class TitleView(viewsets.ModelViewSet): 
-    #serializer_class = TitleSerializer
+# class CustomPagination(pagination.PageNumberPagination):
+#     page_size = 100
+#     page_size_query_param = 'page_size'
+#     max_page_size = 200
+#     def get_paginated_response(self, data):
+#         return Response({
+#             'links': {
+#                 'next': self.get_next_link(),
+#                 'previous': self.get_previous_link()
+#             },
+#             'count': self.page.paginator.count,
+#             'results': data
+#         })
+
+class CursorSetPagination(CursorPagination):
+    page_size = 20
+    max_page_size = 100
+    page_size_query_param = 'page_size'
     
-    def get_title_by_type(self, title_type):
-        self.queryset = Title.objects.get(title_type__exact=title_type).filter(is_adult__exact=False)    #ignore
-        output_json = TitleSerializer.serialize('json', self.queryset)
-        return HttpResponse(output_json)
 
-    def get_title_by_genre(self, genre):
-        self.queryset = Title.extra(where=['%s in genre'], params=[genre]).filter(is_adult__exact=False)
-        output_json = TitleSerializer.serialize('json', self.queryset)
-        return HttpResponse(output_json)
+class TitleList(generics.ListCreateAPIView):
+    pagination_class = CursorPagination
+    pagination_class.ordering = 'title_id'
+    pagination_class.page_size = 20
+    pagination_class.max_page_size = 50
+
+    queryset = Title.objects.exclude(is_adult__exact=True)
+    serializer_class = TitleSerializer
+
+
+class TitleTypeList(generics.ListCreateAPIView):
+    pagination_class = CursorPagination
+    pagination_class.ordering = 'title_id'
+    pagination_class.page_size = 20
+    pagination_class.max_page_size = 50
+
+    serializer_class = TitleSerializer
+
+    def get_queryset(self):
+        t = self.kwargs['title_type']
+        return Title.objects.filter(title_type=t)
+
+class TitleGenreList(generics.ListCreateAPIView):
+    pagination_class = CursorPagination
+    pagination_class.ordering = 'title_id'
+    pagination_class.page_size = 20
+    pagination_class.max_page_size = 50
+
+    serializer_class = TitleSerializer
+
+    def get_queryset(self):
+        t = self.kwargs['genre']
+        return Title.objects.filter(genres__contains=[t])
+
+class TitleTopList(generics.ListCreateAPIView):
     
-    def get_all_title(self):
-        self.queryset = Title.objects.all().filter(is_adult__exact=False)    #ignore
-        output_json = TitleSerializer.serialize('json', self.queryset)
-        return HttpResponse(output_json)
+    # pagination_class.ordering = '-average_rating'
+    serializer_class = TitleRatingSerializer
 
-    def get_top_titles(self, year=None):
-        if (year):
-            self.queryset = Title.objects.select_related('tbl_rating').filter(start_year__exact=year, is_adult__exact=False).order_by('-average_rating')[:10]
-        else:
-            self.queryset = Title.objects.select_related('tbl_rating').filter(is_adult__exact=False).order_by('-average_rating')
-        output_json = TitleRatingSerializer.serialize('json', self.queryset)
-        return HttpResponse(output_json)
+    def get_queryset(self):
+        try:
+            y = self.kwargs['year']
+            pagination_class = None
+            return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')[:10]
+        except:
+            self.pagination_class = CursorPagination
+            self.pagination_class.max_page_size = 50
+            self.pagination_class.page_size = 20
+            return Title.objects.all().select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')
 
-    # def index(request):
-    #     latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    #     output = ', '.join([q.question_text for q in latest_question_list])
-    #     return HttpResponse(output)
-
-
-class ActorView(viewsets.ModelViewSet): 
-    #serializer_class = ActorSerializer
     
-    def get_all_actors(self):
-        self.queryset = Actor.objects.all()
+# class TitleDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Title.objects.all()[:20]
+#     serializer_class = TitleSerializer
 
 
-class RatingView(viewsets.ModelViewSet): 
-    #serializer_class = RatingSerializer
-
-    def get_all_ratings(self):
-        self.queryset = Rating.objects.all()
-
-class TitleActorView(viewsets.ModelViewSet): 
-    #serializer_class = TitleActorSerializer
-
-    def get_all_title_actors(self):
-        self.queryset = TitleActor.objects.all()
-
-def index(request):
-    return HttpResponse("Hello, world. You're at the app index.")
 
