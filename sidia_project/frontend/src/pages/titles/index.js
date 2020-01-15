@@ -1,3 +1,9 @@
+/* eslint-disable react/no-unused-state */
+/* eslint-disable react/no-access-state-in-setstate */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-else-return */
 /* eslint-disable no-unused-vars */
 /* eslint-disable prefer-template */
 /* eslint-disable dot-notation */
@@ -6,7 +12,7 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable camelcase */
 import React from 'react'
-import { Table, Icon, Input, Button, message } from 'antd'
+import { Table, Icon, Input, Button, message, Tag, Badge } from 'antd'
 import { Helmet } from 'react-helmet'
 import axios from 'axios'
 import config_server from "config.json"
@@ -18,14 +24,46 @@ class TitleList extends React.Component {
   state = {
     tableData: [],
     data: [],
+    type_list: [],
+    filtered_type: [],
     filterDropdownVisible: false,
     searchText: '',
     filtered: false,
-    // nextPageURL: ''
   }
 
   componentDidMount() {
+    this.get_type_list()
     this.get_title_list()
+  }
+
+  get_type_list = () => {
+
+    let self = this
+    let type_list = []
+    let i
+
+    fetch("http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/", {
+      method: 'GET',
+    }).then(function (response) {
+      if (response.status >= 400) {
+        message.error('Bad response from server')
+        throw new Error("Bad response from server")
+      }
+      return response.json();
+    }).then(function (data_loaded) {
+
+      
+      for (i in data_loaded) {
+        type_list.push({ "text": data_loaded[i].title_type, "value": data_loaded[i].title_type })
+      }
+      
+      self.setState({ type_list })
+
+    }).catch(function (err) {
+      console.log(err);
+    });
+
+
   }
 
   get_title_list = () => {
@@ -42,7 +80,7 @@ class TitleList extends React.Component {
       return response.json();
     }).then(function (data_loaded) {
 
-      console.log(data_loaded.results)
+      // console.log(data_loaded.results)
       self.setState({ data: data_loaded.results, tableData: data_loaded.results })
 
     }).catch(function (err) {
@@ -50,6 +88,22 @@ class TitleList extends React.Component {
     });
 
   }
+
+  handleChange = (pagination, filters, sorter) => {
+    this.setState({
+      filtered_type: filters
+    });
+  };
+
+  // clearFilters = () => {
+  //   this.setState({ filtered_type: null });
+  // };
+
+  // clearAll = () => {
+  //   this.setState({
+  //     filtered_type: null,
+  //   });
+  // };
 
   onInputChange = e => {
     this.setState({ searchText: e.target.value })
@@ -89,7 +143,7 @@ class TitleList extends React.Component {
   }
 
   render() {
-    const { data, searchText, filtered, filterDropdownVisible } = this.state
+    const { data, searchText, filtered, filterDropdownVisible, type_list } = this.state
 
     const columns = [
 
@@ -97,28 +151,33 @@ class TitleList extends React.Component {
         title: 'ID',
         dataIndex: 'title_id',
         key: 'title_id',
+        width: '8%',
         render: text => (
           <a className="utils__link--underlined" href="javascript: void(0);">
             {`#${text}`}
           </a>
         ),
-        sorter: (a, b) => a.id - b.id,
+        sorter: (a, b) => a.title_id - b.title_id,
       },
       {
         title: 'Title',
         dataIndex: 'original_title',
         // key: 'original_title',
-        sorter: (a, b) => a.name.length - b.name.length,
+        width: '20%',
+        ellipsis: true,
+        sorter: (a, b) => a.original_title.length - b.original_title.length,
         render: text => (
+      
           <a className="utils__link--underlined" href="javascript: void(0);">
             {text}
           </a>
+    
         ),
         filterDropdown: (
           <div className="custom-filter-dropdown">
             <Input
               ref={this.linkSearchInput}
-              placeholder="Search name"
+              placeholder="Search title"
               value={searchText}
               onChange={this.onInputChange}
               onPressEnter={this.onSearch}
@@ -143,40 +202,88 @@ class TitleList extends React.Component {
         title: 'Type',
         dataIndex: 'title_type',
         // key: 'title_type',
-        sorter: (a, b) => a.type.length - b.type.length,
+        width: '10%',
+        align: 'center',
+        render: record => { return (record !== null) ? record : "-" },
+        filters: type_list,
+        onFilter: (value, record) => record.title_type.includes(value),
       },
       {
         title: 'Adult ?',
         dataIndex: 'is_adult',
         // key: 'is_adult',
-        sorter: (a, b) => a.status.length - b.status.length,
-        render: record => <span className="font-size-12 badge badge-success">{record}</span>,
+        width: '5%',
+        align: 'center',
+        render: (record) => { 
+              
+              if (record !== null) {
+                if (record === true) {
+                    return (
+                      <Badge status="error" />
+                    );
+                } else {
+                    return (
+                      <Badge status="success" />
+                    );
+                }
+              }
+              return (
+                <Badge status="warning" />
+              ); 
+            } ,
       },
       {
         title: 'Start Year',
         dataIndex: 'start_year',
         // key: 'start_year',
-        sorter: (a, b) => a.attribute.length - b.attribute.length,
+        width: '8%',
+        align: 'center',
+        sorter: (a, b) => a.start_year - b.start_year,
+        render: record => { return (record !== null) ? record : "-" }
       },
       {
         title: 'End Year',
         dataIndex: 'end_year',
         // key: 'end_year',
-        sorter: (a, b) => a.sku.length - b.sku.length,
+        width: '8%',
+        align: 'center',
+        sorter: (a, b) => a.end_year - b.end_year,
+        render: record => { return (record !== null) ? record : "-" }
       },
       {
-        title: 'Runtime(Min)',
+        title: 'Runtime',
         dataIndex: 'runtime_minutes',
         // key: 'runtime_minutes',
-        sorter: (a, b) => a.price - b.price,
+        width: '8%',
+        align: 'center',
+        sorter: (a, b) => a.runtime_minutes - b.runtime_minutes,
+        render: record => { return (record !== null) ? record + " min" : "-" }
       },
       {
         title: 'Genres',
-        dataIndex: 'genre',
+        dataIndex: 'genres',
         // key: 'genre',
-        sorter: (a, b) => a.quantity - b.quantity,
+        width: '20%',
+        sorter: (a, b) => a.genres.length - b.genres.length,
+        render: record => (
+          <span>
+            {record.map(genre => {
+              if (genre === null) {
+                return (
+                  <Tag color="orange">
+                    {"Undefined"}
+                  </Tag>
+                );
+              } 
+              return (
+                <Tag color="geekblue">
+                  { genre }
+                </Tag>
+              ); }
+            )}
+          </span>
+        ),
       },
-      
       {
         title: 'Action',
         // key: 'action',
@@ -185,9 +292,9 @@ class TitleList extends React.Component {
             <Button icon="edit" className="mr-1" size="small">
               View
             </Button>
-            <Button icon="cross" size="small">
+            {/* <Button icon="cross" size="small">
               Remove
-            </Button>
+            </Button> */}
           </span>
         ),
       },
@@ -209,6 +316,7 @@ class TitleList extends React.Component {
               scroll={{ x: '100%' }}
               columns={columns}
               dataSource={data}
+              onChange={this.handleChange}
             />
           </div>
         </div>

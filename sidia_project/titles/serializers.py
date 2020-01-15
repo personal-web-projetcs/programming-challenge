@@ -7,6 +7,11 @@ class TitleSerializer(serializers.ModelSerializer):
         #fields = ('title_id', 'tconst', 'title_type', 'primary_title', 'original_title', 'is_adult', 'start_year', 'end_year', 'runtime_minutes', 'genres')
         fields = ('title_id', 'title_type', 'original_title', 'is_adult', 'start_year', 'end_year', 'runtime_minutes', 'genres')
 
+class TypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Title
+        fields = ('title_type', 'title_id')
+
 class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating

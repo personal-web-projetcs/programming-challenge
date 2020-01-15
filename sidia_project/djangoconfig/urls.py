@@ -23,6 +23,8 @@ from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = [
     path('api/titles/', views.TitleList.as_view()),
 
+    path('api/titles/types/', views.TypesList.as_view()),
+
     path('api/titles/type/<str:title_type>/', views.TitleTypeList.as_view()),
     path('api/titles/genre/<str:genre>/', views.TitleGenreList.as_view()),
 

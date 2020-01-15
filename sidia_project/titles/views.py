@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.http import Http404
 from django.core import serializers as s
 from django.shortcuts import get_object_or_404
+import psycopg2
 
 from rest_framework.pagination import CursorPagination
 from rest_framework import mixins
@@ -10,7 +11,7 @@ from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer
+from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer
 from .models import Title, Actor, Rating, TitleActor
 import json
 
@@ -42,8 +43,13 @@ class TitleList(generics.ListCreateAPIView):
     pagination_class.page_size = 20
     pagination_class.max_page_size = 50
 
-    queryset = Title.objects.exclude(is_adult__exact=True)
+    queryset = Title.objects.all()
     serializer_class = TitleSerializer
+
+
+class TypesList(generics.ListCreateAPIView):
+    queryset = Title.objects.raw('SELECT DISTINCT ON (title_type) title_type, title_id FROM tbl_title ORDER BY title_type, title_id')
+    serializer_class = TypesSerializer
 
 
 class TitleTypeList(generics.ListCreateAPIView):
