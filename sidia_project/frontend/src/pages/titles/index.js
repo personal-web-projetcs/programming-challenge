@@ -29,14 +29,16 @@ class TitleList extends React.Component {
     filterDropdownVisible: false,
     searchText: '',
     filtered: false,
+    previous_page: "",
+    next_page: ""
   }
 
   componentDidMount() {
-    this.get_type_list()
-    this.get_title_list()
+    this.getTypeList()
+    this.getTitleList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/")
   }
 
-  get_type_list = () => {
+  getTypeList = () => {
 
     let self = this
     let type_list = []
@@ -66,11 +68,11 @@ class TitleList extends React.Component {
 
   }
 
-  get_title_list = () => {
+  getTitleList = (url) => {
 
     let self = this;
 
-    fetch("http://" + config_server.ip + ":" + config_server.port + "/api/titles/", {
+    fetch(url, {
       method: 'GET',
     }).then(function (response) {
       if (response.status >= 400) {
@@ -80,8 +82,11 @@ class TitleList extends React.Component {
       return response.json();
     }).then(function (data_loaded) {
 
-      // console.log(data_loaded.results)
-      self.setState({ data: data_loaded.results, tableData: data_loaded.results })
+      // console.log(data_loaded)
+      self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next })
+      console.log("<<<< LINK >>>>")
+      console.log(data_loaded.previous)
+      console.log(data_loaded.next)
 
     }).catch(function (err) {
       console.log(err);
@@ -95,15 +100,12 @@ class TitleList extends React.Component {
     });
   };
 
-  // clearFilters = () => {
-  //   this.setState({ filtered_type: null });
-  // };
-
-  // clearAll = () => {
-  //   this.setState({
-  //     filtered_type: null,
-  //   });
-  // };
+  handleClick = (id) => {
+    if (id === "next")
+      this.get_title_list(this.state.next_page)
+    else if (id === "previous")
+      this.get_title_list(this.state.previous_page)
+  }
 
   onInputChange = e => {
     this.setState({ searchText: e.target.value })
@@ -317,7 +319,19 @@ class TitleList extends React.Component {
               columns={columns}
               dataSource={data}
               onChange={this.handleChange}
+              pagination={{ hideOnSinglePage:true }}
             />
+            <br />
+            <Button.Group>
+              <Button type="ghost" onClick={() => this.handleClick("next")} className="mr-1" disabled={this.state.previous_page === null}>
+                <Icon type="left" />
+                Previous
+              </Button>
+              <Button type="ghost" onClick={() => this.handleClick("previous")} className="mr-1" disabled={this.state.next_page === null}>
+                Next
+                <Icon type="right" />
+              </Button>
+            </Button.Group>
           </div>
         </div>
       </div>

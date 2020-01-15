@@ -32,16 +32,14 @@ import json
 #         })
 
 class CursorSetPagination(CursorPagination):
-    page_size = 20
-    max_page_size = 100
+    page_size = 10
+    max_page_size = 10
     page_size_query_param = 'page_size'
     
 
 class TitleList(generics.ListCreateAPIView):
-    pagination_class = CursorPagination
+    pagination_class = CursorSetPagination
     pagination_class.ordering = 'title_id'
-    pagination_class.page_size = 20
-    pagination_class.max_page_size = 50
 
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
