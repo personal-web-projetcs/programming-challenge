@@ -10,8 +10,9 @@ from rest_framework import mixins
 from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework import status
 
-from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer
+from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, ManyTypesSerializer
 from .models import Title, Actor, Rating, TitleActor
 import json
 
@@ -33,8 +34,7 @@ import json
 
 class CursorSetPagination(CursorPagination):
     page_size = 10
-    max_page_size = 10
-    page_size_query_param = 'page_size'
+    #max_page_size = 10
     
 
 class TitleList(generics.ListCreateAPIView):
@@ -53,8 +53,8 @@ class TypesList(generics.ListCreateAPIView):
 class TitleTypeList(generics.ListCreateAPIView):
     pagination_class = CursorPagination
     pagination_class.ordering = 'title_id'
-    pagination_class.page_size = 20
-    pagination_class.max_page_size = 50
+    pagination_class.page_size = 10
+    #pagination_class.max_page_size = 50
 
     serializer_class = TitleSerializer
 
@@ -62,11 +62,34 @@ class TitleTypeList(generics.ListCreateAPIView):
         t = self.kwargs['title_type']
         return Title.objects.filter(title_type=t)
 
+class ManyTypesList(viewsets.ModelViewSet):
+    pagination_class = CursorSetPagination
+    serializer_class = TitleSerializer
+     
+    def get_queryset(self):
+        p = self.request.data
+        return Title.objects.filter(title_type__in=p.values()).order_by('title_id')
+    
+    # def list(self, request):
+        
+    #     p = request.data
+    #     queryset = Title.objects.filter(title_type__in=p.values())[:10]
+    #     serializer = TitleSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    # def get_serializer_class(self):
+    #     if self.action == 'list':
+    #         serializer = TitleSerializer
+    #     elif self.action == 'retrieve':
+    #         serializer = ManyTypesSerializer
+    #     return serializer
+        
+
 class TitleGenreList(generics.ListCreateAPIView):
     pagination_class = CursorPagination
     pagination_class.ordering = 'title_id'
-    pagination_class.page_size = 20
-    pagination_class.max_page_size = 50
+    pagination_class.page_size = 10
+    # pagination_class.max_page_size = 50
 
     serializer_class = TitleSerializer
 
@@ -86,8 +109,8 @@ class TitleTopList(generics.ListCreateAPIView):
             return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')[:10]
         except:
             self.pagination_class = CursorPagination
-            self.pagination_class.max_page_size = 50
-            self.pagination_class.page_size = 20
+            # self.pagination_class.max_page_size = 50
+            self.pagination_class.page_size = 10
             return Title.objects.all().select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')
 
     

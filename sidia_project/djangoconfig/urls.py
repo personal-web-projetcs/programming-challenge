@@ -25,6 +25,8 @@ urlpatterns = [
 
     path('api/titles/types/', views.TypesList.as_view()),
 
+    path('api/titles/types/filter/', views.ManyTypesList.as_view({'post': 'list'})),
+
     path('api/titles/type/<str:title_type>/', views.TitleTypeList.as_view()),
     path('api/titles/genre/<str:genre>/', views.TitleGenreList.as_view()),
 

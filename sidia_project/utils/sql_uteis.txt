@@ -1,0 +1,85 @@
+SELECT
+   *
+FROM
+   pg_catalog.pg_tables
+WHERE
+   schemaname != 'pg_catalog'
+AND schemaname != 'information_schema';
+
+ALTER TABLE <tablename> OWNER TO <username>
+
+select column_name, data_type, character_maximum_length
+from INFORMATION_SCHEMA.COLUMNS where table_name = 'tbl_title'
+
+select column_name, data_type, character_maximum_length
+from INFORMATION_SCHEMA.COLUMNS where table_name = 'tbl_actor'
+
+select column_name, data_type, character_maximum_length
+from INFORMATION_SCHEMA.COLUMNS where table_name = 'tbl_rating'
+
+SELECT * FROM tbl_title
+
+SELECT * FROM tbl_actor
+
+DELETE FROM tbl_title WHERE tbl_title.tconst <> ''
+
+DELETE FROM tbl_actor WHERE tbl_actor.nconst <> ''
+
+UPDATE dummy
+SET customer=subquery.customer,
+    address=subquery.address,
+    partn=subquery.partn
+FROM (SELECT address_id, customer, address, partn
+      FROM  /* big hairy SQL */ ...) AS subquery
+WHERE dummy.address_id=subquery.address_id;
+
+
+WITH subquery AS (
+    SELECT address_id, customer, address, partn
+    FROM  /* big hairy SQL */ ...
+)
+UPDATE dummy
+SET customer = subquery.customer,
+    address  = subquery.address,
+    partn    = subquery.partn
+FROM subquery
+WHERE dummy.address_id = subquery.address_id;
+
+CREATE TABLE tbl_rating_temp (
+    user_id serial PRIMARY KEY,
+    tconst VARCHAR (20),
+    average_rating DOUBLE PRECISION,
+    num_votes INTEGER,
+)
+
+CREATE TABLE tbl_title_actor_temp (
+    uid serial PRIMARY KEY,
+    tconst VARCHAR (20),
+	nconst VARCHAR (20)
+)
+
+CREATE TABLE tbl_title_temp (
+    uid serial PRIMARY KEY,
+    tconst VARCHAR (20),
+	is_adult BOOLEAN
+)
+
+ALTER TABLE tbl_title_actor_temp OWNER TO djangoapp
+
+INSERT INTO tbl_rating
+   SELECT title_id, average_rating, num_votes
+   FROM  tbl_title INNER JOIN tbl_rating_temp ON tbl_title.tconst=tbl_rating_temp.tconst
+   WHERE tbl_title.tconst <> ''
+
+INSERT INTO tbl_title_actor
+SELECT uid, title_id, actor_id
+FROM  tbl_title_actor_temp INNER JOIN tbl_title ON tbl_title_actor_temp.tconst=tbl_title.tconst
+INNER JOIN tbl_actor ON tbl_actor.nconst=tbl_title_actor_temp.nconst
+WHERE tbl_title.title_id IS NOT NULL AND tbl_actor.actor_id IS NOT NULL
+
+UPDATE tbl_title
+SET is_adult = tbl_title_temp.is_adult
+from tbl_title_temp 
+where tbl_title.tconst = tbl_title_temp.tconst
+
+SELECT title_type, COUNT(title_id) FROM tbl_title GROUP BY title_type

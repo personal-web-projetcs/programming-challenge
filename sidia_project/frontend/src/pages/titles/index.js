@@ -29,25 +29,30 @@ class TitleList extends React.Component {
     filterDropdownVisible: false,
     searchText: '',
     filtered: false,
+    loading: false,
+    filtered_field: "",
     previous_page: "",
     next_page: ""
   }
 
   componentDidMount() {
-    this.getTypeList()
+    this.getTypeList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/")
     this.getTitleList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/")
   }
 
-  getTypeList = () => {
+  getTypeList = (url) => {
 
     let self = this
     let type_list = []
     let i
 
-    fetch("http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/", {
+    self.setState({ loading: true });
+    fetch(url, {
       method: 'GET',
     }).then(function (response) {
       if (response.status >= 400) {
+        self.setState({ loading: false });
+        console.log(url)
         message.error('Bad response from server')
         throw new Error("Bad response from server")
       }
@@ -59,9 +64,10 @@ class TitleList extends React.Component {
         type_list.push({ "text": data_loaded[i].title_type, "value": data_loaded[i].title_type })
       }
       
-      self.setState({ type_list })
+      self.setState({ type_list, loading: false })
 
     }).catch(function (err) {
+      self.setState({ type_list, loading: false })
       console.log(err);
     });
 
@@ -72,25 +78,86 @@ class TitleList extends React.Component {
 
     let self = this;
 
+    self.setState({ loading: true });
+
     fetch(url, {
       method: 'GET',
     }).then(function (response) {
       if (response.status >= 400) {
-        message.error('Bad response from server');
-        throw new Error("Bad response from server");
+        self.setState({loading: false})
+        console.log(response)
+        message.error('Bad response from server')
+        throw new Error("Bad response from server")
       }
       return response.json();
     }).then(function (data_loaded) {
 
       // console.log(data_loaded)
-      self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next })
-      console.log("<<<< LINK >>>>")
-      console.log(data_loaded.previous)
-      console.log(data_loaded.next)
+      self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next, loading: false })
+      // console.log("<<<< LINK >>>>")
+      // console.log(data_loaded.previous)
+      // console.log(data_loaded.next)
 
     }).catch(function (err) {
+      self.setState({ loading: false });
       console.log(err);
     });
+
+  }
+
+  getTitleListFiltered = (categorie, filters, url) => {
+
+    let self = this
+    let item = {}
+    let data_list = []
+    let i
+    let f
+    let data = {}
+
+
+    this.setState({ loading: true });
+    f = filters.title_type
+    // console.log(f)
+    // console.log(f.length)
+    // console.log("<<< data >>")
+    for (i = 0; i < f.length; i+=1)
+    item["type-" + i] = f[i]
+      data_list.push(item)
+
+    data = {"types": data_list}
+
+    // console.log("<<< datalist >>")
+    // console.log(data.types)
+    // console.log(JSON.stringify(data_list))
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data_list[0])
+      }).then(function (response) {
+        if (response.status >= 400) {
+          self.setState({ loading: false });
+          message.error('Bad response from server');
+          throw new Error("Bad response from server");
+        }
+        return response.json();
+      }).then(function (data_loaded) {
+          
+          // console.log(data_loaded)
+          if ((data_loaded !== null) && (data_loaded !== undefined)) {
+          //   // console.log("Consulta de Insumos realizada com sucesso");
+          //   // console.log(data_loaded);
+
+            self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next, loading: false })
+            
+          //   // self.setState({ tableData: dados.data });
+          //   // self.setState({ data: dados.data });
+          }
+
+      }).catch(function (err) {
+        self.setState({ loading: false });
+        console.log(err)
+      });
 
   }
 
@@ -98,13 +165,22 @@ class TitleList extends React.Component {
     this.setState({
       filtered_type: filters
     });
+    this.getTitleListFiltered("type", filters, "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/")
   };
 
   handleClick = (id) => {
+    let filters = this.state.filtered_type
+    let url
+
     if (id === "next")
-      this.get_title_list(this.state.next_page)
+      url = this.state.next_page
     else if (id === "previous")
-      this.get_title_list(this.state.previous_page)
+      url = this.state.previous_page
+    
+    if (filters.length > 0)
+        this.getTitleList(url)
+    else
+        this.getTitleListFiltered("type", filters, url)
   }
 
   onInputChange = e => {
@@ -208,7 +284,7 @@ class TitleList extends React.Component {
         align: 'center',
         render: record => { return (record !== null) ? record : "-" },
         filters: type_list,
-        onFilter: (value, record) => record.title_type.includes(value),
+        onFilter: (value, record) => record.title_type.includes(value)
       },
       {
         title: 'Adult ?',
@@ -267,24 +343,23 @@ class TitleList extends React.Component {
         // key: 'genre',
         width: '20%',
         sorter: (a, b) => a.genres.length - b.genres.length,
-        render: record => (
-          <span>
-            {record.map(genre => {
-              if (genre === null) {
-                return (
-                  <Tag color="orange">
-                    {"Undefined"}
-                  </Tag>
-                );
-              } 
-              return (
-                <Tag color="geekblue">
-                  { genre }
-                </Tag>
-              ); }
-            )}
-          </span>
-        ),
+        render: record => { if (record === null) {
+                              return (
+                                <Tag color="orange">
+                                  {"Undefined"}
+                                </Tag>
+                              )
+                            } else {
+                              return record.map(genre => {
+                                return (
+                                  <Tag color="geekblue">
+                                    { genre }
+                                  </Tag>
+                                )
+                              })
+                            }
+      } 
+          
       },
       {
         title: 'Action',
@@ -320,14 +395,15 @@ class TitleList extends React.Component {
               dataSource={data}
               onChange={this.handleChange}
               pagination={{ hideOnSinglePage:true }}
+              loading={this.state.loading}
             />
             <br />
             <Button.Group>
-              <Button type="ghost" onClick={() => this.handleClick("next")} className="mr-1" disabled={this.state.previous_page === null}>
+              <Button type="ghost" onClick={() => this.handleClick("previous")} className="mr-1" disabled={this.state.previous_page === null}>
                 <Icon type="left" />
                 Previous
               </Button>
-              <Button type="ghost" onClick={() => this.handleClick("previous")} className="mr-1" disabled={this.state.next_page === null}>
+              <Button type="ghost" onClick={() => this.handleClick("next")} className="mr-1" disabled={this.state.next_page === null}>
                 Next
                 <Icon type="right" />
               </Button>
