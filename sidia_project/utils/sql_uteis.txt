@@ -83,3 +83,40 @@ from tbl_title_temp
 where tbl_title.tconst = tbl_title_temp.tconst
 
 SELECT title_type, COUNT(title_id) FROM tbl_title GROUP BY title_type
+
+Complete: select count(*) from tbl_title inner join tbl_rating on tbl_title.title_id=tbl_rating.title_id_id
+where tbl_title.start_year is not null and tbl_title.end_year is not null and tbl_title.runtime_minutes is not null
+and tbl_title.genres is not null and tbl_rating.average_rating is not null and tbl_rating.num_votes is not null
+
+Table dashboard: 
+   SELECT
+      tbl_title.title_type,
+      COUNT(title_id),
+	  s.maxavg,
+	  t.minavg,
+	  avgc,
+	  u.cad
+    FROM
+      tbl_title
+	INNER JOIN 
+     (
+      SELECT title_type, COUNT(is_adult) AS cad FROM tbl_title WHERE is_adult=true GROUP BY title_type) u 	 
+	ON tbl_title.title_type=u.title_type 
+    INNER JOIN
+     (
+      SELECT tbl_title.title_type, MAX(tbl_rating.average_rating) AS maxavg FROM tbl_title
+		 inner join tbl_rating on tbl_title.title_id=tbl_rating.title_id_id GROUP BY tbl_title.title_type ) s 
+    ON tbl_title.title_type=s.title_type  
+	 INNER JOIN 
+     (
+      SELECT tbl_title.title_type, MIN(tbl_rating.average_rating) AS minavg FROM tbl_title
+		 inner join tbl_rating on tbl_title.title_id=tbl_rating.title_id_id GROUP BY tbl_title.title_type ) t 
+	ON tbl_title.title_type=t.title_type
+	INNER JOIN
+	(
+		SELECT tbl_title.title_type, ROUND(AVG(tbl_rating.average_rating)::numeric,2) AS avgc FROM tbl_title
+		 inner join tbl_rating on tbl_title.title_id=tbl_rating.title_id_id GROUP BY tbl_title.title_type
+	) w
+	ON tbl_title.title_type=w.title_type 
+	 
+	GROUP BY tbl_title.title_type, s.maxavg, t.minavg, u.cad, w.avgc

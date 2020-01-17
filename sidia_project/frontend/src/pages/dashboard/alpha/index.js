@@ -1,61 +1,137 @@
+/* eslint-disable prefer-destructuring */
+/* eslint-disable prefer-template */
+/* eslint-disable prefer-const */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable func-names */
+/* eslint-disable camelcase */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable react/jsx-indent */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable react/no-unused-state */
+/* eslint-disable no-unused-vars */
 import React from 'react'
-import { Button, Table } from 'antd'
+import { Button, Table, message } from 'antd'
 import { Helmet } from 'react-helmet'
 import PaymentCard from 'components/CleanUIComponents/PaymentCard'
 import PaymentAccount from 'components/CleanUIComponents/PaymentAccount'
 import PaymentTransaction from 'components/CleanUIComponents/PaymentTransaction'
 import ChartCard from 'components/CleanUIComponents/ChartCard'
 import Authorize from 'components/LayoutComponents/Authorize'
-import { tableData } from './data.json'
+import config_server from "config.json"
+
 
 class DashboardAlpha extends React.Component {
+  state = {
+    title_count: 0,
+    actor_count: 0,
+    data: []
+  }
+  
+  componentDidMount() {
+    this.getCount('title')
+    this.getCount('actor')
+    this.getTypeCount()
+  }
+
+  getCount = (param) => {
+
+    let self = this
+    let url = "http://" + config_server.ip + ":" + config_server.port + "/api/titles/stat/" + param + "/"
+
+    fetch(url, {
+      method: 'GET',
+    }).then(function (response) {
+      if (response.status >= 400) {
+        self.setState({ loading: false });
+        console.log(url)
+        message.error('Bad response from server')
+        throw new Error("Bad response from server")
+      }
+      return response.json();
+    }).then(function (data_loaded) {
+
+      if (param === 'title')
+        self.setState({ title_count: data_loaded.title_count })
+      else if (param === 'actor')
+        self.setState({ actor_count: data_loaded.actor_count })
+
+    }).catch(function (err) {
+      
+      console.log(err);
+
+    });
+
+  }
+  
+
+  getTypeCount = () => {
+
+    let self = this
+    let url = "http://" + config_server.ip + ":" + config_server.port + "/api/titles/stat/type/"
+
+    fetch(url, {
+      method: 'GET',
+    }).then(function (response) {
+      if (response.status >= 400) {
+        self.setState({ loading: false });
+        console.log(url)
+        message.error('Bad response from server')
+        throw new Error("Bad response from server")
+      }
+      return response.json();
+    }).then(function (data_loaded) {
+
+      // console.log(data_loaded.type_count)
+      let data = data_loaded.type_count
+      self.setState({ data })
+
+    }).catch(function (err) {
+      
+      console.log(err);
+
+    });
+
+  }
+
   render() {
-    const tableColumns = [
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-      },
-      {
-        title: 'Position',
-        dataIndex: 'position',
-        key: 'position',
-      },
-      {
-        title: 'Age',
-        dataIndex: 'age',
-        key: 'age',
-        sorter: (a, b) => a.age - b.age,
-      },
-      {
-        title: 'Office',
-        dataIndex: 'office',
-        key: 'office',
-      },
-      {
-        title: 'Date',
-        dataIndex: 'date',
-        key: 'date',
-      },
-      {
-        title: 'Salary',
-        dataIndex: 'salary',
-        key: 'salary',
-        sorter: (a, b) => a.salary - b.salary,
-      },
-    ]
+    
+    const items = this.state.data.map((item) => {
+      // console.log(item.category)
+      return  (<div className="col-xl-4">
+                  <ChartCard
+                    title={item.title_type}
+                    amount={item.qty}
+                    chartProps={{
+                      width: 120,
+                      height: 107,
+                      lines: [
+                        {
+                          values: [2, 11, 8, 14, 18, 20, 26],
+                          colors: {
+                            area: 'rgba(199, 228, 255, 0.5)',
+                            line: '#004585',
+                          },
+                        },
+                      ],
+                    }}
+                  />
+               </div>)
+
+    })
+    const {title_count, actor_count} = this.state
 
     return (
       <Authorize roles={['admin']} redirect to="/dashboard/beta">
-        <Helmet title="Dashboard Alpha" />
+        <Helmet title="Dashboard" />
         <div className="utils__title utils__title--flat mb-3">
-          <strong className="text-uppercase font-size-16">Last Week Statistics</strong>
+          <strong className="text-uppercase font-size-16">Statistics from Registered Titles</strong>
         </div>
         <div className="row">
           <div className="col-xl-4">
             <ChartCard
-              title="Transactions"
-              amount="1240"
+              title="Titles"
+              amount={title_count}
               chartProps={{
                 width: 120,
                 height: 107,
@@ -73,8 +149,8 @@ class DashboardAlpha extends React.Component {
           </div>
           <div className="col-xl-4">
             <ChartCard
-              title="Income"
-              amount="$1,240.00"
+              title="Actors"
+              amount={actor_count}
               chartProps={{
                 width: 120,
                 height: 107,
@@ -92,7 +168,7 @@ class DashboardAlpha extends React.Component {
           </div>
           <div className="col-xl-4">
             <ChartCard
-              title="Outcome"
+              title="Completed data"
               amount="$240.56"
               chartProps={{
                 width: 120,
@@ -109,16 +185,17 @@ class DashboardAlpha extends React.Component {
               }}
             />
           </div>
+          {items}
         </div>
-        <div className="row">
+        {/* <div className="row">
           <div className="col-lg-12">
             <div className="card">
               <div className="card-header">
                 <div className="utils__title">
-                  <strong>Recently Referrals</strong>
+                  <strong>Categories</strong>
                 </div>
                 <div className="utils__titleDescription">
-                  Block with important Recently Referrals information
+                  Statistics from Titles by type
                 </div>
               </div>
               <div className="card-body">
@@ -132,12 +209,12 @@ class DashboardAlpha extends React.Component {
               </div>
             </div>
           </div>
-        </div>
-        <div className="utils__title utils__title--flat mb-3">
+        </div> */}
+        {/* <div className="utils__title utils__title--flat mb-3">
           <strong className="text-uppercase font-size-16">Your Cards (3)</strong>
           <Button className="ml-3">View All</Button>
-        </div>
-        <div className="row">
+        </div> */}
+        {/* <div className="row">
           <div className="col-lg-4">
             <PaymentCard
               icon="lnr lnr-bookmark"
@@ -239,7 +316,7 @@ class DashboardAlpha extends React.Component {
               </Button>
             </div>
           </div>
-        </div>
+        </div> */}
       </Authorize>
     )
   }

@@ -21,6 +21,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 
 urlpatterns = [
+
     path('api/titles/', views.TitleList.as_view()),
 
     path('api/titles/types/', views.TypesList.as_view()),
@@ -33,6 +34,9 @@ urlpatterns = [
     path('api/titles/year/', views.TopList.as_view({'get': 'list'})),
     path('api/titles/year/<str:year>/', views.TopList.as_view({'get': 'list'})),
     
+    path('api/titles/stat/title/', views.TitleCountView.as_view()),
+    path('api/titles/stat/actor/', views.ActorCountView.as_view()),
+    path('api/titles/stat/type/', views.TypeCountView.as_view()),
     #path('index/', include('titles.urls')),
     path('admin/', admin.site.urls),
 ]

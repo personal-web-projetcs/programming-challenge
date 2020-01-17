@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.http import Http404
 from django.core import serializers as s
 from django.shortcuts import get_object_or_404
-import psycopg2
+from django.db.models import Count, Value
 
+from rest_framework.renderers import JSONRenderer
+from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework import mixins
 from rest_framework import generics
@@ -12,7 +12,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, ManyTypesSerializer
+from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, ManyTypesSerializer, DashboardSerializer, TitleDashSerializer
 from .models import Title, Actor, Rating, TitleActor
 import json
 
@@ -140,6 +140,32 @@ class TopList(viewsets.ModelViewSet):
             return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')[:10]
         except:
             return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('title_id').order_by('-rating__average_rating')
+
+
+class TitleCountView(APIView):
+    renderer_classes = (JSONRenderer, )
+
+    def get(self, request, format=None):
+        title_count = Title.objects.count()
+        content = {'title_count': title_count}
+        return Response(content)
+
+class ActorCountView(APIView):
+    renderer_classes = (JSONRenderer, )
+
+    def get(self, request, format=None):
+        actor_count = Actor.objects.count()
+        content = {'actor_count': actor_count}
+        return Response(content)
+
+class TypeCountView(APIView):
+    renderer_classes = (JSONRenderer, )
+
+    def get(self, request, format=None):
+        type_count = Title.objects.values('title_type').annotate(qty=Count('title_type'))
+        content = {'type_count': type_count}
+        return Response(content)
+
 
 # class TitleDetail(generics.RetrieveUpdateDestroyAPIView):
 #     queryset = Title.objects.all()[:20]

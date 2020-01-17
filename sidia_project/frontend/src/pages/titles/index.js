@@ -66,7 +66,7 @@ class TitleList extends React.Component {
       self.setState({ type_list, loading: false })
 
     }).catch(function (err) {
-      self.setState({ type_list, loading: false })
+      self.setState({ loading: false })
       console.log(err);
     });
 

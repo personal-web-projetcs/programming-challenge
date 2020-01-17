@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react'
 import { BackTop, Layout } from 'antd'
 import { connect } from 'react-redux'
@@ -43,16 +44,16 @@ class MainLayout extends React.PureComponent {
         <Menu />
         <Settings />
         <Layout>
-          <Layout.Header>
+          {/* <Layout.Header>
             <TopBar />
-          </Layout.Header>
+          </Layout.Header> */}
           <Layout.Content style={{ height: '100%', position: 'relative' }}>
             <Breadcrumbs />
             <div className="utils__content">{children}</div>
           </Layout.Content>
-          <Layout.Footer>
+          {/* <Layout.Footer>
             <Footer />
-          </Layout.Footer>
+          </Layout.Footer> */}
         </Layout>
       </Layout>
     )

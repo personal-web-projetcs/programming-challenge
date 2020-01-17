@@ -58,7 +58,7 @@ class Settings extends React.Component {
                 type="button"
               />
             </div>
-            <div className={styles.description}>
+            {/* <div className={styles.description}>
               This component &quot;Settings&quot; gives possibility to construct custom blocks with
               any widgets, components and elements inside, like this theme settings
             </div>
@@ -70,7 +70,7 @@ class Settings extends React.Component {
                 }}
               />
               <span className={styles.itemLabel}>Menu Top (Horizontal)</span>
-            </div>
+            </div> */}
             <div className={styles.item}>
               <Switch
                 disabled={isMenuTop}
