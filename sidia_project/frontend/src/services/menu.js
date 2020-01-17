@@ -28,6 +28,12 @@ export async function getLeftMenuData() {
       icon: 'icmn icmn-home',
     },
     {
+      title: 'Top List',
+      key: 'top-list',
+      url: '/top-titles',
+      icon: 'icmn icmn-home',
+    },
+    {
       title: 'Dashboard Beta',
       key: 'dashboardBeta',
       url: '/dashboard/beta',

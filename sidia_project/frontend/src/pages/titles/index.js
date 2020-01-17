@@ -14,7 +14,6 @@
 import React from 'react'
 import { Table, Icon, Input, Button, message, Tag, Badge } from 'antd'
 import { Helmet } from 'react-helmet'
-import axios from 'axios'
 import config_server from "config.json"
 // import table from './data.json'
 
@@ -31,8 +30,8 @@ class TitleList extends React.Component {
     filtered: false,
     loading: false,
     filtered_field: "",
-    previous_page: "",
-    next_page: ""
+    previous_page: null,
+    next_page: null
   }
 
   componentDidMount() {
@@ -92,7 +91,7 @@ class TitleList extends React.Component {
       return response.json();
     }).then(function (data_loaded) {
 
-      // console.log(data_loaded)
+      console.log(data_loaded)
       self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next, loading: false })
       // console.log("<<<< LINK >>>>")
       // console.log(data_loaded.previous)
@@ -117,9 +116,7 @@ class TitleList extends React.Component {
 
     this.setState({ loading: true });
     f = filters.title_type
-    // console.log(f)
-    // console.log(f.length)
-    // console.log("<<< data >>")
+    
     for (i = 0; i < f.length; i+=1)
     item["type-" + i] = f[i]
       data_list.push(item)
@@ -142,8 +139,8 @@ class TitleList extends React.Component {
         }
         return response.json();
       }).then(function (data_loaded) {
-          
-          // console.log(data_loaded)
+          console.log("filtered")
+          console.log(data_loaded)
           if ((data_loaded !== null) && (data_loaded !== undefined)) {
           //   // console.log("Consulta de Insumos realizada com sucesso");
           //   // console.log(data_loaded);
@@ -161,12 +158,42 @@ class TitleList extends React.Component {
 
   }
 
-  handleChange = (pagination, filters, sorter) => {
-    this.setState({
-      filtered_type: filters
-    });
-    this.getTitleListFiltered("type", filters, "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/")
-  };
+  onHandleTable = (pagination, filters, sortes) => {
+  
+    let f = this.state.filtered_type
+    let n_elem_st = 0
+    let n_elem = 0
+
+    console.log(filters)
+    console.log(f)
+
+    if (filters !== null && filters !== undefined)
+        n_elem = Object.keys(filters["title_type"]).length
+    if (f !== null && f !== undefined)
+        n_elem_st = f.length
+        
+
+    if (n_elem > 0) {
+      
+      // if(JSON.stringify(f) !== JSON.stringify(filters)) {
+        if(n_elem !== n_elem_st) {
+          this.setState({
+            filtered_type: filters["title_type"]
+          });
+          console.log(filters)
+          this.getTitleListFiltered("type", filters, "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/")
+        } 
+    } else if(n_elem_st > 0) {
+
+          this.setState({
+            filtered_type: []
+          });
+
+          this.getTitleList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/")
+        
+    } 
+
+  }
 
   handleClick = (id) => {
     let filters = this.state.filtered_type
@@ -177,7 +204,7 @@ class TitleList extends React.Component {
     else if (id === "previous")
       url = this.state.previous_page
     
-    if (filters.length > 0)
+    if (filters.length === 0)
         this.getTitleList(url)
     else
         this.getTitleListFiltered("type", filters, url)
@@ -195,15 +222,15 @@ class TitleList extends React.Component {
       filtered: !!searchText,
       data: tableData
         .map(record => {
-          const match = record.name.match(reg)
+          const match = record.original_title.match(reg)
           if (!match) {
             return null
           }
           return {
             ...record,
-            name: (
+            original_title: (
               <span>
-                {record.name
+                {record.original_title
                   .split(reg)
                   .map((text, i) =>
                     i > 0 ? [<span className="highlight">{match[0]}</span>, text] : text,
@@ -338,6 +365,15 @@ class TitleList extends React.Component {
         render: record => { return (record !== null) ? record + " min" : "-" }
       },
       {
+        title: 'Rating',
+        dataIndex: 'rating',
+        key: 'average_rating',
+        width: '8%',
+        align: 'center',
+        sorter: (a, b) => a.average_rating - b.average_rating,
+        render: record => { return (record) ? record.average_rating : "-" }
+      },
+      {
         title: 'Genres',
         dataIndex: 'genres',
         // key: 'genre',
@@ -350,10 +386,10 @@ class TitleList extends React.Component {
                                 </Tag>
                               )
                             } else {
-                              return record.map(genre => {
+                              return record.map((genre, index) => {
                                 return (
                                   <Tag color="geekblue">
-                                    { genre }
+                                    { record[index] }
                                   </Tag>
                                 )
                               })
@@ -361,20 +397,21 @@ class TitleList extends React.Component {
       } 
           
       },
-      {
-        title: 'Action',
-        // key: 'action',
-        render: () => (
-          <span>
-            <Button icon="edit" className="mr-1" size="small">
-              View
-            </Button>
-            {/* <Button icon="cross" size="small">
-              Remove
-            </Button> */}
-          </span>
-        ),
-      },
+      
+      // {
+      //   title: 'Action',
+      //   // key: 'action',
+      //   render: () => (
+      //     <span>
+      //       <Button icon="edit" className="mr-1" size="small">
+      //         View
+      //       </Button>
+      //       {/* <Button icon="cross" size="small">
+      //         Remove
+      //       </Button> */}
+      //     </span>
+      //   ),
+      // },
     ]
 
     return (
@@ -393,7 +430,7 @@ class TitleList extends React.Component {
               scroll={{ x: '100%' }}
               columns={columns}
               dataSource={data}
-              onChange={this.handleChange}
+              onChange={this.onHandleTable}
               pagination={{ hideOnSinglePage:true }}
               loading={this.state.loading}
             />

@@ -30,8 +30,8 @@ urlpatterns = [
     path('api/titles/type/<str:title_type>/', views.TitleTypeList.as_view()),
     path('api/titles/genre/<str:genre>/', views.TitleGenreList.as_view()),
 
-    path('api/titles/year/', views.TitleTopList.as_view()),
-    path('api/titles/year/<str:year>/', views.TitleTopList.as_view()),
+    path('api/titles/year/', views.TopList.as_view({'get': 'list'})),
+    path('api/titles/year/<str:year>/', views.TopList.as_view({'get': 'list'})),
     
     #path('index/', include('titles.urls')),
     path('admin/', admin.site.urls),

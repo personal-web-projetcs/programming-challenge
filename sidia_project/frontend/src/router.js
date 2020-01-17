@@ -37,6 +37,10 @@ const routes = [
     component: loadable(() => import('pages/titles')),
   },
   {
+    path: '/top-titles',
+    component: loadable(() => import('pages/top-titles')),
+  },
+  {
     path: '/dashboard/beta',
     component: loadable(() => import('pages/dashboard/beta')),
     exact: true,
