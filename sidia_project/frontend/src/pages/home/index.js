@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable prefer-template */
 /* eslint-disable prefer-const */
@@ -11,7 +12,7 @@
 /* eslint-disable react/no-unused-state */
 /* eslint-disable no-unused-vars */
 import React from 'react'
-import { Button, Table, message } from 'antd'
+import { Button, Table, message, Spin } from 'antd'
 import { Helmet } from 'react-helmet'
 import PaymentCard from 'components/CleanUIComponents/PaymentCard'
 import PaymentAccount from 'components/CleanUIComponents/PaymentAccount'
@@ -22,16 +23,26 @@ import config_server from "config.json"
 
 
 class DashboardAlpha extends React.Component {
+  
   state = {
-    title_count: 0,
-    actor_count: 0,
-    data: []
+    title: null,
+    actor: null,
+    completed: null,
+    adult: null,
+    worst: null,
+    loading: false,
+    data: [],
   }
   
   componentDidMount() {
+    this.setState({loading: true})
     this.getCount('title')
     this.getCount('actor')
+    this.getCount('completed')
+    this.getCount('worst')
+    this.getCount('adult')
     this.getTypeCount()
+    this.setState({loading: false})
   }
 
   getCount = (param) => {
@@ -50,11 +61,18 @@ class DashboardAlpha extends React.Component {
       }
       return response.json();
     }).then(function (data_loaded) {
-
-      if (param === 'title')
-        self.setState({ title_count: data_loaded.title_count })
-      else if (param === 'actor')
-        self.setState({ actor_count: data_loaded.actor_count })
+      
+        if (param === 'title') {
+          self.setState({ title: data_loaded.title_count })
+        } else if (param === 'actor') {
+          self.setState({ actor: data_loaded.actor_count })
+        } else if (param === 'completed') {
+          self.setState({ completed: data_loaded.completed })
+        } else if (param === 'adult') {
+          self.setState({ adult: data_loaded.adult })
+        } else if (param === 'worst') {
+          self.setState({ worst: data_loaded.worst })
+        }
 
     }).catch(function (err) {
       
@@ -94,99 +112,88 @@ class DashboardAlpha extends React.Component {
 
   }
 
-  render() {
+  getRandomArbitrary(min, max) {
+    let values  = []
+    for (let i = 0; i <= 5; i+=1) {
+      values.push(Math.round(Math.random() * (max - min) + min))
+    }
+    return values
+  }
+
+  prepareCard = (title_card, value) => {
+      let v = this.getRandomArbitrary(10, 150)
+      if (title_card !== null) {  
+        return (
+                  <div className="col-xl-4">
+                    <ChartCard
+                      title={title_card}
+                      amount={value}
+                      chartProps={{
+                        width: 120,
+                        height: 107,
+                        lines: [
+                          {
+                            values: v,
+                            colors: {
+                              area: 'rgba(199, 228, 255, 0.5)',
+                              line: '#004585',
+                            },
+                          },
+                        ],
+                      }}
+                    />
+                  </div>)
+      } 
+                
+                return (
+                  <div className="col-xl-4">
+                    <ChartCard
+                      title="Loading.."
+                      amount={0}
+                      chartProps={{
+                        width: 120,
+                        height: 107,
+                        lines: [
+                          {
+                            values: v,
+                            colors: {
+                              area: 'rgba(199, 228, 255, 0.5)',
+                              line: '#004585',
+                            },
+                          },
+                        ],
+                      }}
+                    />
+                  </div>)
+      
     
+  }
+
+  render() {
+    const {title, actor, completed, adult, worst} = this.state
     const items = this.state.data.map((item) => {
       // console.log(item.category)
-      return  (<div className="col-xl-4">
-                  <ChartCard
-                    title={item.title_type}
-                    amount={item.qty}
-                    chartProps={{
-                      width: 120,
-                      height: 107,
-                      lines: [
-                        {
-                          values: [2, 11, 8, 14, 18, 20, 26],
-                          colors: {
-                            area: 'rgba(199, 228, 255, 0.5)',
-                            line: '#004585',
-                          },
-                        },
-                      ],
-                    }}
-                  />
-               </div>)
-
+        let v = this.getRandomArbitrary(10, 150)
+        return this.prepareCard(item.title_type, item.qty + " ~ " + (100*item.qty/title).toFixed(2) + "%", title)
     })
-    const {title_count, actor_count} = this.state
 
     return (
-      <Authorize roles={['admin']} redirect to="/dashboard/beta">
+      // <Authorize roles={['admin']} redirect to="/dashboard/beta">
+      <div>
         <Helmet title="Dashboard" />
         <div className="utils__title utils__title--flat mb-3">
           <strong className="text-uppercase font-size-16">Statistics from Registered Titles</strong>
         </div>
+        
         <div className="row">
-          <div className="col-xl-4">
-            <ChartCard
-              title="Titles"
-              amount={title_count}
-              chartProps={{
-                width: 120,
-                height: 107,
-                lines: [
-                  {
-                    values: [2, 11, 8, 14, 18, 20, 26],
-                    colors: {
-                      area: 'rgba(199, 228, 255, 0.5)',
-                      line: '#004585',
-                    },
-                  },
-                ],
-              }}
-            />
-          </div>
-          <div className="col-xl-4">
-            <ChartCard
-              title="Actors"
-              amount={actor_count}
-              chartProps={{
-                width: 120,
-                height: 107,
-                lines: [
-                  {
-                    values: [20, 80, 67, 120, 132, 66, 97],
-                    colors: {
-                      area: 'rgba(199, 228, 255, 0.5)',
-                      line: '#004585',
-                    },
-                  },
-                ],
-              }}
-            />
-          </div>
-          <div className="col-xl-4">
-            <ChartCard
-              title="Completed data"
-              amount="$240.56"
-              chartProps={{
-                width: 120,
-                height: 107,
-                lines: [
-                  {
-                    values: [42, 40, 80, 67, 84, 20, 97],
-                    colors: {
-                      area: 'rgba(199, 228, 255, 0.5)',
-                      line: '#004585',
-                    },
-                  },
-                ],
-              }}
-            />
-          </div>
-          {items}
+            {this.prepareCard('Titles', title)}
+            {this.prepareCard('Actors', actor)}
+            {this.prepareCard('Adult Titles', adult)}
+            {this.prepareCard('Completed Data', completed)}
+            {this.prepareCard('Worst Rating', worst)}
+            {items}
         </div>
+       
         {/* <div className="row">
           <div className="col-lg-12">
             <div className="card">
@@ -317,7 +324,8 @@ class DashboardAlpha extends React.Component {
             </div>
           </div>
         </div> */}
-      </Authorize>
+      {/* // </Authorize> */}
+      </div>
     )
   }
 }

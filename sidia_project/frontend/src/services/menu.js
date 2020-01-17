@@ -16,22 +16,22 @@ export async function getLeftMenuData() {
       divider: true,
     },
     {
-      title: 'Dashboard Alpha',
+      title: 'Home Dashboard',
       key: 'dashboardAlpha',
-      url: '/dashboard/alpha',
+      url: '/home/',
       icon: 'icmn icmn-home',
     },
     {
       title: 'Titles',
       key: 'list-titles',
       url: '/titles',
-      icon: 'icmn icmn-home',
+      icon: 'icmn icmn-menu',
     },
     {
       title: 'Top List',
       key: 'top-list',
       url: '/top-titles',
-      icon: 'icmn icmn-home',
+      icon: 'icmn icmn-menu',
     },
   //   {
   //     title: 'Dashboard Beta',
@@ -64,12 +64,12 @@ export async function getLeftMenuData() {
   //   {
   //     divider: true,
   //   },
-    {
-      title: 'AntDesign Components',
-      key: 'antComponents',
-      icon: 'icmn icmn-menu',
-      url: '/antd',
-    },
+    // {
+    //   title: 'AntDesign Components',
+    //   key: 'antComponents',
+    //   icon: 'icmn icmn-menu',
+    //   url: '/antd',
+    // },
   //   {
   //     divider: true,
   //   },
@@ -405,11 +405,6 @@ export async function getTopMenuData() {
       key: 'pages',
       icon: 'icmn icmn-stack',
       children: [
-        {
-          title: 'Dashboard Alpha',
-          key: 'dashboardAlpha',
-          url: '/dashboard/alpha',
-        },
         {
           title: 'Dashboard Beta',
           key: 'dashboardBeta',

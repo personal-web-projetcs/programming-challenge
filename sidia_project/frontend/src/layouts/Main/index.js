@@ -51,9 +51,13 @@ class MainLayout extends React.PureComponent {
             <Breadcrumbs />
             <div className="utils__content">{children}</div>
           </Layout.Content>
-          {/* <Layout.Footer>
-            <Footer />
-          </Layout.Footer> */}
+          <Layout.Footer>
+            {/* <Footer /> */}
+            <img
+              src="resources/images/footer.png"
+              alt="<< React + Django >>"
+            />
+          </Layout.Footer>
         </Layout>
       </Layout>
     )

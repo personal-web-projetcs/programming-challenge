@@ -37,6 +37,10 @@ urlpatterns = [
     path('api/titles/stat/title/', views.TitleCountView.as_view()),
     path('api/titles/stat/actor/', views.ActorCountView.as_view()),
     path('api/titles/stat/type/', views.TypeCountView.as_view()),
+    path('api/titles/stat/completed/', views.CompletedDataView.as_view()),
+    path('api/titles/stat/adult/', views.AdultCountView.as_view()),
+    path('api/titles/stat/worst/', views.WorstRatingView.as_view()),
+
     #path('index/', include('titles.urls')),
     path('admin/', admin.site.urls),
 ]

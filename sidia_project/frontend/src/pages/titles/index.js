@@ -113,14 +113,15 @@ class TitleList extends React.Component {
     let f
     let data = {}
 
-
+    console.log("<<<< Teste")
     this.setState({ loading: true });
     f = filters.title_type
-    
-    for (i = 0; i < f.length; i+=1)
-    item["type-" + i] = f[i]
+    console.log(filters)
+    for (i = 0; i < f.length; i+=1) {
+      item["type-" + i] = f[i]
       data_list.push(item)
-
+    }
+    console.log("OUT of >>>")
     data = {"types": data_list}
 
     // console.log("<<< datalist >>")
@@ -198,16 +199,22 @@ class TitleList extends React.Component {
   handleClick = (id) => {
     let filters = this.state.filtered_type
     let url
-
+    console.log("CLICL >>>>>")
     if (id === "next")
       url = this.state.next_page
     else if (id === "previous")
       url = this.state.previous_page
     
-    if (filters.length === 0)
+    if (filters.length === 0) {
+        console.log("Testando")
         this.getTitleList(url)
-    else
-        this.getTitleListFiltered("type", filters, url)
+    } else {
+      console.log("sssTEEEEE")
+      console.log(filters)
+        this.getTitleListFiltered("type", {title_type: filters}, url)
+
+        
+    }
   }
 
   onInputChange = e => {

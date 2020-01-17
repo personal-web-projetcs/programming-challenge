@@ -67,20 +67,6 @@ class ManyTypesList(viewsets.ModelViewSet):
     def get_queryset(self):
         p = self.request.data
         return Title.objects.filter(title_type__in=p.values()).order_by('title_id').select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6)
-    
-    # def list(self, request):
-        
-    #     p = request.data
-    #     queryset = Title.objects.filter(title_type__in=p.values())[:10]
-    #     serializer = TitleSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
-    # def get_serializer_class(self):
-    #     if self.action == 'list':
-    #         serializer = TitleSerializer
-    #     elif self.action == 'retrieve':
-    #         serializer = ManyTypesSerializer
-    #     return serializer
         
 
 class TitleGenreList(generics.ListCreateAPIView):
@@ -95,44 +81,10 @@ class TitleGenreList(generics.ListCreateAPIView):
         t = self.kwargs['genre']
         return Title.objects.filter(genres__contains=[t])
 
-# class TitleTopList(generics.ListCreateAPIView):
-    
-#     # pagination_class.ordering = '-average_rating'
-#     serializer_class = TitleRatingSerializer
-
-#     def get_queryset(self):
-#         try:
-#             y = self.kwargs['year']
-#             pagination_class = None
-#             return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')[:10]
-#         except:
-#             self.pagination_class = CursorPagination
-#             # self.pagination_class.max_page_size = 50
-#             self.pagination_class.page_size = 10
-#             self.pagination_class.ordering = '-average_rating'
-
-#             return Title.objects.all().select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None)
-
-# class TopListByYear(generics.ListCreateAPIView):
-#     pagination_class = CustomPagination
-#     serializer_class = TitleRatingSerializer
-
-#     def get_queryset(self):
-#         y = self.kwargs['year']
-#         return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')[:10]
-
-# class TopList(viewsets.ModelViewSet):
-#     pagination_class = CustomPagination
-#     serializer_class = TitleRatingSerializer
-#     # queryset = Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')
-
-#     def get_queryset(self):
-#         return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('title_id').order_by('-rating__average_rating')
 
 class TopList(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     serializer_class = TitleRatingSerializer
-    # queryset = Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')
 
     def get_queryset(self):
         try:
@@ -166,10 +118,32 @@ class TypeCountView(APIView):
         content = {'type_count': type_count}
         return Response(content)
 
+class CompletedDataView(APIView):
+    renderer_classes = (JSONRenderer, )
 
-# class TitleDetail(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Title.objects.all()[:20]
-#     serializer_class = TitleSerializer
+    def get(self, request, format=None):
+        completed_count = Title.objects.select_related('tbl_rating').exclude(start_year__exact=None).exclude(end_year__exact=None).exclude(runtime_minutes__exact=None) \
+                                                                    .exclude(genres__exact=None).exclude(rating__average_rating__exact=None).exclude(rating__num_votes__exact=None).count()
+        content = {'completed': completed_count}
+        return Response(content)
+
+class AdultCountView(APIView):
+    renderer_classes = (JSONRenderer, )
+
+    def get(self, request, format=None):
+        adult_count = Title.objects.filter(is_adult__exact=True).count()
+        content = {'adult': adult_count}
+        return Response(content)
+
+class WorstRatingView(APIView):
+    renderer_classes = (JSONRenderer, )
+
+    def get(self, request, format=None):
+        worst_count = Title.objects.select_related('rating').filter(rating__average_rating__lt=6).count()
+        content = {'worst': worst_count}
+        return Response(content)
+    
+
 
 
 
