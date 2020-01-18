@@ -130,7 +130,8 @@ class TitleList extends React.Component {
   }
 
   onInputChange = e => {
-    this.setState({ searchText: e.target.value })
+    if (/^\d+$/.test(e.target.value))
+      this.setState({ searchText: e.target.value })
   }
 
   onSearch = () => {
@@ -206,7 +207,7 @@ class TitleList extends React.Component {
           <div className="custom-filter-dropdown">
             <Input
               ref={this.linkSearchInput}
-              placeholder="Filter Top Titles by year"
+              placeholder="Filter Top Titles by Year"
               value={searchText}
               onChange={this.onInputChange}
               onPressEnter={this.onSearch}

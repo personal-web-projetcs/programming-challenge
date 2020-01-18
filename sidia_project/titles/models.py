@@ -65,7 +65,5 @@ class TitleActor(models.Model):
     class Meta:
         db_table = 'tbl_title_actor'
 
-class DataImportApp(object):
-    def importFile(self, separator):
-        pass
+
     

@@ -87,7 +87,7 @@ class Title(object):
                 print(e)
                 print(str_item)
                 exit()
-            print("ratings - i = " + str(i) + " ; is_adult = " + str(self.is_adult))
+            print("title - i = " + str(i))
         db_cursor.close()
         db.conn.close()
     
