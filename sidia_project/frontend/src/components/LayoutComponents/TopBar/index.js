@@ -1,47 +1,25 @@
 import React from 'react'
-import { Button } from 'antd'
-import { FormattedMessage } from 'react-intl'
-import HomeMenu from './HomeMenu'
-import ProjectManagement from './ProjectManagement'
-import IssuesHistory from './IssuesHistory'
-import LiveSearch from './LiveSearch'
-import BitcoinPrice from './BitcoinPrice'
+import { Typography } from 'antd'
 import ProfileMenu from './ProfileMenu'
 import LanguageSelector from './LanguageSelector'
 import styles from './style.module.scss'
+
+const { Title } = Typography;
 
 class TopBar extends React.Component {
   render() {
     return (
       <div className={styles.topbar}>
-        <div className="mr-4">
-          <IssuesHistory />
+        <div className="mr-4" style={{ marginTop: '1%' }}>
+          <Title>Titles Management</Title>
         </div>
-        <div className="mr-4">
-          <ProjectManagement />
-        </div>
-        <div className="mr-auto">
-          <LiveSearch />
-        </div>
-        <a
-          href="https://themeforest.net/item/clean-ui-admin-template-react-redux-ant-design-fully-responsive-freebies/21938700"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mr-4 d-none d-sm-inline"
-        >
-          <Button type="danger">
-            <FormattedMessage id="topBar.buyNow" />
-          </Button>
-        </a>
-        <div className="mr-4">
-          <BitcoinPrice />
-        </div>
+        <div className="mr-4" />
+        <div className="mr-auto" />
+        <div className="mr-4" />
         <div className="mr-4">
           <LanguageSelector />
         </div>
-        <div className="mr-4">
-          <HomeMenu />
-        </div>
+        <div className="mr-4" />
         <ProfileMenu />
       </div>
     )
