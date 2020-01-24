@@ -1,10 +1,8 @@
-/* eslint-disable react/no-unused-state */
 /* eslint-disable react/no-access-state-in-setstate */
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable guard-for-in */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-else-return */
-/* eslint-disable no-unused-vars */
 /* eslint-disable prefer-template */
 /* eslint-disable dot-notation */
 /* eslint-disable func-names */
@@ -29,7 +27,6 @@ class TitleList extends React.Component {
     searchText: '',
     filtered: false,
     loading: false,
-    filtered_field: "",
     previous_page: null,
     next_page: null
   }
@@ -111,9 +108,7 @@ class TitleList extends React.Component {
     let data_list = []
     let i
     let f
-    let data = {}
-
-    console.log("<<<< Teste")
+    
     this.setState({ loading: true });
     f = filters.title_type
     console.log(filters)
@@ -121,8 +116,6 @@ class TitleList extends React.Component {
       item["type-" + i] = f[i]
       data_list.push(item)
     }
-    console.log("OUT of >>>")
-    data = {"types": data_list}
 
     // console.log("<<< datalist >>")
     // console.log(data.types)
@@ -159,8 +152,8 @@ class TitleList extends React.Component {
 
   }
 
-  onHandleTable = (pagination, filters, sortes) => {
-  
+  onHandleTable = (pagination, filters) => {
+                  // possible fields: (pagination, filters, sortes)
     let f = this.state.filtered_type
     let n_elem_st = 0
     let n_elem = 0

@@ -5,7 +5,6 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-else-return */
-/* eslint-disable no-unused-vars */
 /* eslint-disable prefer-template */
 /* eslint-disable dot-notation */
 /* eslint-disable func-names */
@@ -13,7 +12,7 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable camelcase */
 import React from 'react'
-import { Table, Icon, Input, Button, message, Tag, Badge, DatePicker } from 'antd'
+import { Table, Icon, Input, Button, message, Tag, Badge } from 'antd'
 import { Helmet } from 'react-helmet'
 import config_server from "config.json"
 // import moment from 'moment'
@@ -22,7 +21,6 @@ import config_server from "config.json"
 // import table from './data.json'
 
 // import styles from './style.module.scss'
-const dateFormat = 'YYYY';
 
 class TitleList extends React.Component {
   state = {
@@ -146,7 +144,7 @@ class TitleList extends React.Component {
   }
 
   render() {
-    const { data, searchText, filtered, filterDropdownVisible, genre_list } = this.state
+    const { data, searchText, filtered, filterDropdownVisible } = this.state
 
     const columns = [
 
@@ -156,7 +154,7 @@ class TitleList extends React.Component {
         key: 'title_id',
         width: '8%',
         render: text => (
-          <a className="utils__link--underlined" href="javascript: void(0);">
+          <a className="utils__link--underlined" href="">
             {`#${text}`}
           </a>
         ),
@@ -198,7 +196,7 @@ class TitleList extends React.Component {
         sorter: (a, b) => a.start_year - b.start_year,
         render: text => (
       
-          <a className="utils__link--underlined" href="javascript: void(0);">
+          <a className="utils__link--underlined" href="">
             {text}
           </a>
     

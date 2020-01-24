@@ -28,7 +28,7 @@ class Title(models.Model):
 
 class Rating(models.Model):
     title_id = models.OneToOneField('Title', on_delete=models.CASCADE, to_field='title_id', primary_key=True, related_name='rating', )
-    average_rating = models.FloatField(null=True)
+    average_rating = models.DecimalField(null=True, max_digits=5, decimal_places=2)
     num_votes = models.IntegerField(validators=[MinValueValidator(0, message='The number of votes must be at least 0')], null=True)
 
     def __str__(self):

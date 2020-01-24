@@ -50,11 +50,6 @@ const routes = [
     component: loadable(() => import('pages/pages/lockscreen')),
     exact: true,
   },
-  {
-    path: '/apps/profile',
-    component: loadable(() => import('pages/apps/profile')),
-    exact: true,
-  },
 ]
 
 class Router extends React.Component {

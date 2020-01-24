@@ -9,16 +9,10 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/jsx-indent */
 /* eslint-disable class-methods-use-this */
-/* eslint-disable react/no-unused-state */
-/* eslint-disable no-unused-vars */
 import React from 'react'
-import { Button, Table, message, Spin } from 'antd'
+import { message } from 'antd'
 import { Helmet } from 'react-helmet'
-import PaymentCard from 'components/CleanUIComponents/PaymentCard'
-import PaymentAccount from 'components/CleanUIComponents/PaymentAccount'
-import PaymentTransaction from 'components/CleanUIComponents/PaymentTransaction'
 import ChartCard from 'components/CleanUIComponents/ChartCard'
-import Authorize from 'components/LayoutComponents/Authorize'
 import config_server from "config.json"
 
 
@@ -30,19 +24,16 @@ class DashboardAlpha extends React.Component {
     completed: null,
     adult: null,
     worst: null,
-    loading: false,
     data: [],
   }
   
   componentDidMount() {
-    this.setState({loading: true})
     this.getCount('title')
     this.getCount('actor')
     this.getCount('completed')
     this.getCount('worst')
     this.getCount('adult')
     this.getTypeCount()
-    this.setState({loading: false})
   }
 
   getCount = (param) => {
@@ -173,7 +164,6 @@ class DashboardAlpha extends React.Component {
     const {title, actor, completed, adult, worst} = this.state
     const items = this.state.data.map((item) => {
       // console.log(item.category)
-        let v = this.getRandomArbitrary(10, 150)
         return this.prepareCard(item.title_type, item.qty + " ~ " + (100*item.qty/title).toFixed(2) + "%", title)
     })
 

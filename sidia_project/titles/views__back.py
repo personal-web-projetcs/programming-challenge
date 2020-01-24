@@ -1,16 +1,20 @@
 from django.shortcuts import render
 from django.core import serializers as s
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Value
+from django.db.models import Count, Value, F
 
+from django.db.models.functions import Now
+
+from rest_framework.settings import api_settings
 from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
-from rest_framework.pagination import CursorPagination, PageNumberPagination
+from rest_framework.pagination import CursorPagination, PageNumberPagination, LimitOffsetPagination
 from rest_framework import mixins
 from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import filters
 
 from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, ManyTypesSerializer, DashboardSerializer, TitleDashSerializer
 from .models import Title, Actor, Rating, TitleActor
@@ -82,16 +86,48 @@ class TitleGenreList(generics.ListCreateAPIView):
         return Title.objects.filter(genres__contains=[t])
 
 
-class TopList(viewsets.ModelViewSet):
-    pagination_class = CustomPagination
+class TopList(generics.ListCreateAPIView): 
+    pagination_class = PageNumberPagination
+    pagination_class.page_size = 10
+    
     serializer_class = TitleRatingSerializer
 
     def get_queryset(self):
         try:
             y = self.kwargs['year']
-            return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+            queryset = self.get_data_by_year(y)
+            return queryset
         except:
-            return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+            queryset = self.get_full_top_list()
+            return queryset
+    
+    def get_data_by_year(self, year):
+        return Title.objects.filter(start_year__exact=year).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+
+    def get_full_top_list(self):
+        return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+
+# class TopList(generics.ListCreateAPIView):
+#     pagination_class = CursorSetPagination
+#     pagination_class.page_size = 10
+#     pagination_class.ordering = 'ts'
+#     serializer_class = TitleRatingSerializer
+
+#     def get_queryset(self):
+#         try:
+#             y = self.kwargs['year']
+#             queryset = self.get_data_by_year(y)
+#             return queryset
+#         except:
+#             queryset = self.get_full_top_list()
+#             return queryset
+    
+#     def get_data_by_year(self, year):
+#         return Title.objects.filter(start_year__exact=year).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating')
+
+#     def get_full_top_list(self):
+        
+#         return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('title_id').order_by('-rating__average_rating').annotate(ts=Now()-start_date)
 
 
 class TitleCountView(APIView):
