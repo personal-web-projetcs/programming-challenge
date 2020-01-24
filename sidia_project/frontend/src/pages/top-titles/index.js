@@ -24,6 +24,7 @@ import config_server from "config.json"
 
 class TitleList extends React.Component {
   state = {
+    pagination: {}, 
     tableData: [],
     avg: [],
     votes: [],
@@ -37,13 +38,13 @@ class TitleList extends React.Component {
   }
   
   componentDidMount() {
-    this.getTopList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/year/")
+    this.getTopList(1)
   }
 
-  getTopList = (url) => {
+  getTopList = (page) => {
 
     let self = this;
-
+    let url = "http://" + config_server.ip + ":" + config_server.port + "/api/titles/year/?page=" + page
     self.setState({ loading: true });
 
     fetch(url, {
@@ -58,8 +59,19 @@ class TitleList extends React.Component {
       return response.json();
     }).then(function (data_loaded) {
 
+      // let pagination = {current: page, next: data_loaded.links.next, previous: data_loaded.links.previous, total: data_loaded.count}
+
+      let pagination = self.state.pagination
+      
+      pagination = {current: page, total: data_loaded.count}
+      
+      console.log("pagination")
+      console.log(self.state.pagination)
+      console.log(pagination)
+      console.log("data")
       console.log(data_loaded)
-      self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.links.previous, next_page: data_loaded.links.next, loading: false })
+      self.setState({ data: data_loaded.results, tableData: data_loaded.results, loading: false, pagination })
+      // self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.links.previous, next_page: data_loaded.links.next, loading: false })
       // console.log("<<<< LINK >>>>")
       // console.log(data_loaded.previous)
       // console.log(data_loaded.next)
@@ -106,13 +118,15 @@ class TitleList extends React.Component {
     
   }
 
-  // handleChange = (pagination, filters, sorter) => {
-  //   this.setState({
-  //     filtered_type: filters
-  //   });
+  // handleChange = (pagination, filters, sorter)
+  handleChange = (pagination) => {
+    let page_man = this.state.pagination
+
+    if (page_man.current !== pagination.current)
+      page_man.current = pagination.current
+      this.getTopList(pagination.current)
     
-  //   // this.getTopListByYear("type", filters, "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/")
-  // };
+  }
 
   handleClick = (id) => {
     let url
@@ -144,7 +158,7 @@ class TitleList extends React.Component {
   }
 
   render() {
-    const { data, searchText, filtered, filterDropdownVisible } = this.state
+    const { data, searchText, filtered, filterDropdownVisible, pagination } = this.state
 
     const columns = [
 
@@ -311,8 +325,8 @@ class TitleList extends React.Component {
               scroll={{ x: '100%' }}
               columns={columns}
               dataSource={data}
-              // onChange={this.handleChange}
-              pagination={{ hideOnSinglePage:true }}
+              onChange={this.handleChange}
+              pagination={{ current: pagination.current, total: pagination.total }}
               loading={this.state.loading}
             />
             <br />

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable consistent-return */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable prefer-template */
@@ -14,7 +15,16 @@ import { message } from 'antd'
 import { Helmet } from 'react-helmet'
 import ChartCard from 'components/CleanUIComponents/ChartCard'
 import config_server from "config.json"
+// eslint-disable-next-line no-unused-vars
+import C3Chart from 'react-c3js'
 
+
+const colors = {
+  primary: '#01a8fe',
+  def: '#acb7bf',
+  success: '#46be8a',
+  danger: '#fb434a',
+}
 
 class DashboardAlpha extends React.Component {
   
@@ -22,8 +32,6 @@ class DashboardAlpha extends React.Component {
     title: null,
     actor: null,
     completed: null,
-    adult: null,
-    worst: null,
     data: [],
   }
   
@@ -31,8 +39,6 @@ class DashboardAlpha extends React.Component {
     this.getCount('title')
     this.getCount('actor')
     this.getCount('completed')
-    this.getCount('worst')
-    this.getCount('adult')
     this.getTypeCount()
   }
 
@@ -59,10 +65,6 @@ class DashboardAlpha extends React.Component {
           self.setState({ actor: data_loaded.actor_count })
         } else if (param === 'completed') {
           self.setState({ completed: data_loaded.completed })
-        } else if (param === 'adult') {
-          self.setState({ adult: data_loaded.adult })
-        } else if (param === 'worst') {
-          self.setState({ worst: data_loaded.worst })
         }
 
     }).catch(function (err) {
@@ -113,7 +115,7 @@ class DashboardAlpha extends React.Component {
 
   prepareCard = (title_card, value) => {
       let v = this.getRandomArbitrary(10, 150)
-      if (title_card !== null) {  
+      if ((title_card !== null) && (title_card !== undefined)) {  
         return (
                   <div className="col-xl-4">
                     <ChartCard
@@ -160,12 +162,53 @@ class DashboardAlpha extends React.Component {
     
   }
 
+  prepare_graph = () => {
+
+    // const pie = {
+    //   data: {
+    //     columns: [['Primary', 30], ['Success', 120]],
+    //     type: 'pie',
+    //   },
+    //   color: {
+    //     pattern: [colors.primary, colors.success],
+    //   },
+    // }
+
+    let data = [['Primary', 30], ['Success', 120]]
+
+    // data.push(this.state.data.map((item) => {
+    //     // return [item.title_type, (100 * item.qty / this.state.title).toFixed(2)]
+    //     // return [item.title_type, 10]
+    // }))
+    console.log("<<< PIE >>>")
+    console.log(data)
+    const pie = {
+      data: {
+        columns: this.state.data.map((item) => { return [item.title_type, (100 * item.qty / this.state.title).toFixed(2)] }),
+        type: 'pie',
+      },
+      // color: {
+      //   pattern: [colors.primary, colors.success, colors.success, colors.success, colors.success, colors.success, colors.success, colors.success, colors.success, colors.success],
+      // },
+    }
+
+    return (
+      <div className="col-xl-4">
+        <div className="mb-4">
+          <C3Chart data={pie.data} color={pie.color} />
+        </div>
+      </div>)
+
+  }
+
   render() {
-    const {title, actor, completed, adult, worst} = this.state
+    const {title, actor, completed} = this.state
     const items = this.state.data.map((item) => {
       // console.log(item.category)
         return this.prepareCard(item.title_type, item.qty + " ~ " + (100*item.qty/title).toFixed(2) + "%", title)
     })
+    const pie_graph = () => this.prepare_graph()
+
 
     return (
       // <Authorize roles={['admin']} redirect to="/dashboard/beta">
@@ -178,10 +221,11 @@ class DashboardAlpha extends React.Component {
         <div className="row">
             {this.prepareCard('Titles', title)}
             {this.prepareCard('Actors', actor)}
-            {this.prepareCard('Adult Titles', adult)}
             {this.prepareCard('Completed Data', completed)}
-            {this.prepareCard('Worst Rating', worst)}
-            {items}
+        </div>
+        <div className="row">
+            {this.prepare_graph()}
+            {/* {items} */}
         </div>
        
         {/* <div className="row">
