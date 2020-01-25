@@ -31,8 +31,14 @@ urlpatterns = [
     path('api/titles/type/<str:title_type>/', views.TitleTypeList.as_view()),
     path('api/titles/genre/<str:genre>/', views.TitleGenreList.as_view()),
 
-    path('api/titles/year/', views.TopList.as_view({'get': 'list'})),
-    path('api/titles/year/<str:year>/', views.TopList.as_view({'get': 'list'})),
+    path('api/titles/genres/', views.GenreList.as_view({'get': 'list'})),
+
+    # path('api/titles/top/', views.TopListFiltered.as_view({'post': 'list'})),
+    # path('api/titles/top/<str:year>/', views.TopListFiltered.as_view({'post': 'list'})),
+
+    path('api/titles/top/', views.TopList.as_view({'get': 'list', 'post': 'list'})),
+    path('api/titles/top/<str:year>/', views.TopList.as_view({'get': 'list', 'post': 'list'})),
+    
     
     path('api/titles/stat/title/', views.TitleCountView.as_view()),
     path('api/titles/stat/actor/', views.ActorCountView.as_view()),

@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.core import serializers as s
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Value
+from django.db.models import Count, Value, Q
+import logging
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
@@ -12,7 +13,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, ManyTypesSerializer, DashboardSerializer, TitleDashSerializer
+from .serializers import TitleSerializer, TitleRatingSerializer, ActorSerializer, RatingSerializer, TitleActorSerializer, TypesSerializer, GenresSerializer, ManyTypesSerializer, DashboardSerializer, TitleDashSerializer
 from .models import Title, Actor, Rating, TitleActor
 import json
 
@@ -67,6 +68,13 @@ class ManyTypesList(viewsets.ModelViewSet):
     def get_queryset(self):
         p = self.request.data
         return Title.objects.filter(title_type__in=p.values()).order_by('title_id').select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6)
+
+class GenreList(viewsets.ModelViewSet):
+    sql_code = '''SELECT DISTINCT ON (s.genres) s.genres as genre, s.title_id FROM ( SELECT DISTINCT ON (genres[1]) genres[1], title_id FROM tbl_title
+                        UNION SELECT DISTINCT ON (genres[2]) genres[2], title_id FROM tbl_title
+                        UNION SELECT DISTINCT ON (genres[3]) genres[3], title_id FROM tbl_title ) AS s  WHERE s.genres IS NOT NULL'''
+    queryset = Title.objects.raw(sql_code)
+    serializer_class = GenresSerializer
         
 
 class TitleGenreList(generics.ListCreateAPIView):
@@ -82,16 +90,128 @@ class TitleGenreList(generics.ListCreateAPIView):
         return Title.objects.filter(genres__contains=[t])
 
 
+# class TopListFiltered(viewsets.ModelViewSet):
+#     pagination_class = CustomPagination
+#     serializer_class = TitleRatingSerializer
+
+#     def get_queryset(self):
+#         logger = logging.getLogger(__name__)
+#         logger.error("Get Queryset")
+#         try:
+#             y = self.kwargs['year']
+#             return self.perform_query(y)
+#         except Exception as e:
+#             print(e)
+#             return self.perform_query()
+
+#     def perform_query(self, year=None):
+#         dataset = []
+#         logger = logging.getLogger(__name__)
+#         if (year):
+#             logger.error('With YEar >>>>>')
+#             g = self.request.data["genres"]["data"]
+#             print(g)
+#             q = Q()
+#             for value in g:
+#                 q |= Q(genres__contains=[value])
+#             dataset = Title.objects.filter(start_year__exact=year).filter(q).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+
+#         else:
+#             logger.error('Without YEar >>>>>')
+#             g = self.request.data['genres']['data']
+
+#             q = Q()
+#             for value in g:
+#                 q |= Q(genres__contains=[value])
+
+#             dataset = Title.objects.filter(q).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+            
+#         return dataset
+
 class TopList(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     serializer_class = TitleRatingSerializer
 
     def get_queryset(self):
+        logger = logging.getLogger(__name__)
+        logger.error("Get Queryset")
+        logger.error(str(self.request.POST))
+        logger.error(str(self.request.GET))
         try:
             y = self.kwargs['year']
-            return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+            return self.perform_query(y)
         except:
-            return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+            return self.perform_query()
+
+    def perform_query(self, year=None):
+        dataset = []
+        logger = logging.getLogger(__name__)
+
+        if (year):
+            logger.error('With YEar >>>>>')
+
+            if (self.request.method == 'POST'):
+                g = self.request.data["genres"]["data"]
+                print(g)
+                q = Q()
+                for value in g:
+                    q |= Q(genres__contains=[value])
+                dataset = Title.objects.filter(start_year__exact=year).filter(q).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')    
+            elif (self.request.method == 'GET'):
+                dataset = Title.objects.filter(start_year__exact=year).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')            
+        
+        else:
+            logger.error('Without YEar >>>>>')
+            
+            if (self.request.method == 'POST'):
+                g = self.request.data["genres"]["data"]
+                print(g)
+                q = Q()
+                for value in g:
+                    q |= Q(genres__contains=[value])
+                dataset = Title.objects.filter(q).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')    
+            elif (self.request.method == 'GET'):
+                dataset = Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+
+
+        return dataset
+
+# class TopList(viewsets.ModelViewSet):
+#     pagination_class = CustomPagination
+#     serializer_class = TitleRatingSerializer
+
+#     def get_queryset(self):
+#         logger = logging.getLogger(__name__)
+#         logger.error("Get Queryset")
+#         logger.error(str(self.request.POST))
+#         logger.error(str(self.request.GET))
+#         try:
+#             y = self.kwargs['year']
+#             return self.perform_query(y)
+#         except:
+#             return self.perform_query()
+
+#     def perform_query(self, year=None):
+#         dataset = []
+#         logger = logging.getLogger(__name__)
+#         if (year):
+#             logger.error('With YEar >>>>>')
+#             dataset = Title.objects.filter(start_year__exact=year).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+#         else:
+#             logger.error('Without YEar >>>>>')
+#             dataset = Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+#         return dataset
+
+# class TopList(viewsets.ModelViewSet):
+#     pagination_class = CustomPagination
+#     serializer_class = TitleRatingSerializer
+
+#     def get_queryset(self):
+#         try:
+#             y = self.kwargs['year']
+#             return Title.objects.filter(start_year__exact=y).select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
+#         except:
+#             return Title.objects.select_related('rating').exclude(is_adult__exact=True).exclude(rating__average_rating__lt=6).exclude(rating__average_rating__exact=None).order_by('-rating__average_rating', 'title_id')
 
 
 class TitleCountView(APIView):

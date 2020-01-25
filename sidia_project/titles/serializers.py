@@ -21,6 +21,12 @@ class TypesSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('title_type', 'title_id')
 
+class GenresSerializer(serializers.ModelSerializer):
+    genre = serializers.CharField()
+    class Meta:
+        model = Title
+        fields = ('genre', 'title_id')
+
 class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating

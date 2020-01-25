@@ -13,12 +13,10 @@ import React from 'react'
 import { Table, Icon, Input, Button, message, Tag, Badge } from 'antd'
 import { Helmet } from 'react-helmet'
 import config_server from "config.json"
-// import table from './data.json'
-
-// import styles from './style.module.scss'
 
 class TitleList extends React.Component {
   state = {
+    page: 1,
     tableData: [],
     data: [],
     type_list: [],
@@ -59,7 +57,8 @@ class TitleList extends React.Component {
       for (i in data_loaded) {
         type_list.push({ "text": data_loaded[i].title_type, "value": data_loaded[i].title_type })
       }
-      
+      console.log("type list >>>>>>>>>>")
+      console.log(type_list)
       self.setState({ type_list, loading: false })
 
     }).catch(function (err) {
@@ -90,9 +89,6 @@ class TitleList extends React.Component {
 
       console.log(data_loaded)
       self.setState({ data: data_loaded.results, tableData: data_loaded.results, previous_page: data_loaded.previous, next_page: data_loaded.next, loading: false })
-      // console.log("<<<< LINK >>>>")
-      // console.log(data_loaded.previous)
-      // console.log(data_loaded.next)
 
     }).catch(function (err) {
       self.setState({ loading: false });
@@ -101,13 +97,14 @@ class TitleList extends React.Component {
 
   }
 
-  getTitleListFiltered = (categorie, filters, url) => {
+  getTitleListFiltered = (filters, url) => {
 
     let self = this
     let item = {}
     let data_list = []
     let i
     let f
+    
     
     this.setState({ loading: true });
     f = filters.title_type
@@ -116,10 +113,6 @@ class TitleList extends React.Component {
       item["type-" + i] = f[i]
       data_list.push(item)
     }
-
-    // console.log("<<< datalist >>")
-    // console.log(data.types)
-    // console.log(JSON.stringify(data_list))
 
     fetch(url, {
         method: 'POST',
@@ -153,61 +146,44 @@ class TitleList extends React.Component {
   }
 
   onHandleTable = (pagination, filters) => {
-                  // possible fields: (pagination, filters, sortes)
-    let f = this.state.filtered_type
-    let n_elem_st = 0
-    let n_elem = 0
+    let url = ""
+    let filter_last = this.state.filtered_type.sort()
+    let filter_current = filters.title_type.sort()
 
-    console.log(filters)
-    console.log(f)
-
-    if (filters !== null && filters !== undefined)
-        n_elem = Object.keys(filters["title_type"]).length
-    if (f !== null && f !== undefined)
-        n_elem_st = f.length
-        
-
-    if (n_elem > 0) {
-      
-      // if(JSON.stringify(f) !== JSON.stringify(filters)) {
-        if(n_elem !== n_elem_st) {
-          this.setState({
-            filtered_type: filters["title_type"]
-          });
-          console.log(filters)
-          this.getTitleListFiltered("type", filters, "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/")
-        } 
-    } else if(n_elem_st > 0) {
-
-          this.setState({
-            filtered_type: []
-          });
-
-          this.getTitleList("http://" + config_server.ip + ":" + config_server.port + "/api/titles/")
-        
-    } 
+    if ((filter_current.length === 0) && (filter_last.length > 0)) {
+      console.log("Zerou filtro")
+      this.setState({ filtered_type: [] })
+      url = "http://" + config_server.ip + ":" + config_server.port + "/api/titles/"
+      this.getTitleList(url)
+    } else if (JSON.stringify(filter_last) !== JSON.stringify(filter_current)) {
+      console.log("Mudou o filtro")
+      this.setState({ filtered_type: filter_current })
+      url = "http://" + config_server.ip + ":" + config_server.port + "/api/titles/types/filter/"
+      this.getTitleListFiltered({title_type: filter_current}, url)
+    }
 
   }
 
   handleClick = (id) => {
     let filters = this.state.filtered_type
     let url
-    console.log("CLICL >>>>>")
-    if (id === "next")
+    let page = this.state.page
+
+    if (id === "next") {
       url = this.state.next_page
-    else if (id === "previous")
+      this.setState({ page: page + 1 })
+    } else if (id === "previous") {
       url = this.state.previous_page
-    
+      this.setState({ page: page - 1 })
+    }
+
     if (filters.length === 0) {
-        console.log("Testando")
         this.getTitleList(url)
     } else {
-      console.log("sssTEEEEE")
       console.log(filters)
-        this.getTitleListFiltered("type", {title_type: filters}, url)
-
-        
+      this.getTitleListFiltered({title_type: filters}, url)
     }
+
   }
 
   onInputChange = e => {
