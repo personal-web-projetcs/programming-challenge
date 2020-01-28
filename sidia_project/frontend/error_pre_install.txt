@@ -1,0 +1,6 @@
+npm install grpc@1.24.1 --build-from-source
+
+or 
+
+
+bump to version    "grpc": "^1.24.2"

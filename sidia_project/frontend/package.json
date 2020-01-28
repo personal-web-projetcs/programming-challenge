@@ -1,5 +1,5 @@
 {
-  "name": "clean-ui-admin-template-cra",
+  "name": "frontend",
   "version": "2.1.1",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run lint-staged"
+
     }
   },
   "lint-staged": {
@@ -32,7 +32,6 @@
   "dependencies": {
     "@rowno/sparkline": "^3.0.1",
     "antd": "^3.13.2",
-    "axios": "^0.19.1",
     "bootstrap-css-only": "^4.2.1",
     "chart.js": "^2.7.3",
     "chartist": "^0.11.0",
